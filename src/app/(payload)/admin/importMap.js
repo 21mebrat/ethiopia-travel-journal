@@ -1,3 +1,5 @@
+import { default as default_c6286fbc7f62f2ce3ef9c604e9c02147 } from '../../../components/graphics/Icon'
+import { default as default_e577ad08317d2e8977edf3e679038fc8 } from '../../../components/graphics/Logo'
 import { default as default_f28970f5d8c0ce35403aa497d9382dcc } from '../../../components/AfterDashboard'
 import { default as default_5e04464f117f07a163ef39772a07c1dc } from '../../../components/AfterNavLinks'
 import { default as default_6b5171ba20d0317956f72f91440ed7b5 } from '../../../components/BeforeDashboard'
@@ -7,6 +9,8 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "/components/graphics/Icon#default": default_c6286fbc7f62f2ce3ef9c604e9c02147,
+  "/components/graphics/Logo#default": default_e577ad08317d2e8977edf3e679038fc8,
   "/components/AfterDashboard#default": default_f28970f5d8c0ce35403aa497d9382dcc,
   "/components/AfterNavLinks#default": default_5e04464f117f07a163ef39772a07c1dc,
   "/components/BeforeDashboard#default": default_6b5171ba20d0317956f72f91440ed7b5,

@@ -39,6 +39,11 @@ export default buildConfig({
       afterNavLinks: [
         "/components/AfterNavLinks"
       ],
+      // graphcs
+      graphics: {
+        Icon: "/components/graphics/Icon",
+        Logo: "/components/graphics/Logo"
+      },
       // providers render the top navbar
       providers: [
         "/components/payload/PerformancePatch"
