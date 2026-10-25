@@ -7,6 +7,12 @@ import sharp from 'sharp'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Categories } from './collections/Categories'
+import { Destinations } from './collections/Destinations'
+import { Articles } from './collections/Articles'
+
+import { en } from '@payloadcms/translations/languages/en'
+import { am } from './i18n/am'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -15,8 +21,8 @@ export default buildConfig({
   admin: {
     avatar: "default",
     autoLogin: process.env.NODE_ENV === "development" ? {
-      email: "test@gmail.com",
-      password: "1234",
+      email: "dev@payloadcms.com",
+      password: "test",
       prefillOnly: true,
     } : false,
     autoRefresh: true,
@@ -26,7 +32,9 @@ export default buildConfig({
         "/components/payload/WelcomeMessage"
       ],
       // after login , compoent render below the login form
-      // afterLogin:[],
+      // afterLogin: [
+      //   "/components/payload/AfterLogin"
+      // ],
       //componet render above the main dashboard
       beforeDashboard: [
         "/components/BeforeDashboard"
@@ -36,14 +44,22 @@ export default buildConfig({
         "/components/AfterDashboard"
       ],
       // component render below the sidebar links
-      afterNavLinks: [
-        "/components/AfterNavLinks"
-      ],
+      // afterNavLinks: [
+      //   "/components/AfterNavLinks"
+      // ],
       // graphcs
       graphics: {
         Icon: "/components/graphics/Icon",
         Logo: "/components/graphics/Logo"
       },
+      // header: [
+      //   "/components/Header"
+      // ],
+      logout: {
+        Button: "/components/LogoutButton"
+      },      // header: [
+      //   "/components/Header"
+      // ],
       // providers render the top navbar
       providers: [
         "/components/payload/PerformancePatch"
@@ -55,7 +71,7 @@ export default buildConfig({
     },
     suppressHydrationWarning: true,
   },
-  collections: [Users, Media],
+  collections: [Users, Media, Categories, Destinations, Articles],
   localization: {
     locales: [
       {
@@ -70,6 +86,13 @@ export default buildConfig({
     ],
     defaultLocale: "en",
     fallback: true
+  },
+  i18n: {
+    fallbackLanguage: 'en',
+    supportedLanguages: {
+      en,
+      am,
+    } as any,
   },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

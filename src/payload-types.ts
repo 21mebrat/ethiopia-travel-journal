@@ -69,6 +69,9 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    categories: Category;
+    destinations: Destination;
+    articles: Article;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +81,9 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    destinations: DestinationsSelect<false> | DestinationsSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -118,13 +124,47 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Who can log in, write articles, and manage the blog?
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: string;
+  /**
+   * The author's given name.
+   */
+  firstName: string;
+  /**
+   * The author's father or family name.
+   */
+  lastName: string;
+  /**
+   * Public pen name shown on blog post bylines and author profile cards. Defaults to First + Last name.
+   */
+  displayName?: string | null;
+  /**
+   * Author photo shown next to articles (square 1:1 aspect ratio recommended).
+   */
+  avatar?: (string | null) | Media;
+  /**
+   * Short author introduction. Supports separate English and Amharic translations.
+   */
+  bio?: string | null;
+  /**
+   * Controls editorial access permissions. Only admins can modify this.
+   */
+  role: 'admin' | 'editor' | 'author';
+  /**
+   * The user's preferred language for the blog interface, notifications, and communication.
+   */
+  preferredLanguage: 'en' | 'am';
   updatedAt: string;
   createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  hasAPIKey?: boolean | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -144,12 +184,21 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Upload and manage blog photos, gallery images, and travel assets.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: string;
+  /**
+   * Important for SEO and screen readers describing the image.
+   */
   alt: string;
+  /**
+   * Optional caption shown beneath the image in blog posts.
+   */
+  caption?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -161,6 +210,202 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * How articles are grouped, such as Culture or History.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  /**
+   * The public title of this category shown on article chips and filter menus.
+   */
+  name: string;
+  /**
+   * URL-friendly identifier. Auto-generated from name if left empty.
+   */
+  slug: string;
+  /**
+   * Explains what articles fall into this category. Used on category archive headers.
+   */
+  description?: string | null;
+  /**
+   * Color used for category badges on article cards and filter tabs.
+   */
+  color?: ('amber' | 'emerald' | 'crimson' | 'blue' | 'brown' | 'purple') | null;
+  /**
+   * When checked, this category appears in top navigation chips and homepage pills.
+   */
+  featured?: boolean | null;
+  /**
+   * Optional icon or graphic displayed next to category title.
+   */
+  icon?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Places such as Lalibela, Gondar, and the Simien Mountains.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations".
+ */
+export interface Destination {
+  id: string;
+  /**
+   * The primary headline of the travel destination.
+   */
+  title: string;
+  /**
+   * URL-friendly slug. Auto-generated from title if left empty.
+   */
+  slug: string;
+  /**
+   * Administrative region or chartered city where this destination is located.
+   */
+  region:
+    | 'amhara'
+    | 'oromia'
+    | 'tigray'
+    | 'afar'
+    | 'sidama'
+    | 'southern_ethiopia'
+    | 'central_ethiopia'
+    | 'south_west_ethiopia'
+    | 'benishangul_gumuz'
+    | 'gambella'
+    | 'harari'
+    | 'somali'
+    | 'addis_ababa'
+    | 'dire_dawa';
+  /**
+   * When checked, this destination appears in the top hero slider and curated cards.
+   */
+  featured?: boolean | null;
+  /**
+   * Wide banner photograph (16:9 ratio recommended) shown at the top of the guide.
+   */
+  heroImage: string | Media;
+  /**
+   * Short introductory summary for destination cards and Google search snippets.
+   */
+  overview: string;
+  travelInfo?: {
+    /**
+     * Optimal weather window for hiking or sightseeing.
+     */
+    bestTimeToVisit?: string | null;
+    /**
+     * Elevation in meters above sea level. Important for acclimatization advice.
+     */
+    altitudeMeters?: number | null;
+    /**
+     * Check if this destination is officially registered on the UNESCO World Heritage list.
+     */
+    isUnescoSite?: boolean | null;
+  };
+  coordinates?: {
+    latitude?: number | null;
+    longitude?: number | null;
+  };
+  /**
+   * Curated photo collection showcasing landscapes, monuments, and cultural scenes.
+   */
+  gallery?:
+    | {
+        image: string | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Travel stories, guides, and editorial content.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: string;
+  /**
+   * Catchy and descriptive headline for this travel story.
+   */
+  title: string;
+  /**
+   * URL-friendly slug. Auto-generated from title if left empty.
+   */
+  slug: string;
+  /**
+   * High-resolution landscape image (16:9 ratio recommended) shown as the article header.
+   */
+  heroImage: string | Media;
+  /**
+   * Brief teaser shown on blog archive cards and Google search previews.
+   */
+  excerpt: string;
+  /**
+   * Full article body. Supports headings, images, quotes, links, and formatted text.
+   */
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * The user account credited for writing this article.
+   */
+  author: string | User;
+  /**
+   * Topics related to this article (e.g. Culture, History, Wildlife).
+   */
+  categories?: (string | Category)[] | null;
+  /**
+   * Select the destinations featured in this story.
+   */
+  destinations?: (string | Destination)[] | null;
+  /**
+   * Date and time displayed on the public article byline.
+   */
+  publishedDate?: string | null;
+  /**
+   * Estimated reading time displayed on article cards (e.g. "5 min read").
+   */
+  readingTimeMinutes?: number | null;
+  /**
+   * Check to highlight this article in the top homepage spotlight grid.
+   */
+  featured?: boolean | null;
+  meta?: {
+    /**
+     * Optimal length: 50-60 characters for search engine result pages.
+     */
+    metaTitle?: string | null;
+    /**
+     * Optimal length: 140-160 characters describing the article content.
+     */
+    metaDescription?: string | null;
+    /**
+     * Image displayed when this article is shared on Facebook, Twitter, Telegram, or LinkedIn.
+     */
+    ogImage?: (string | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -193,6 +438,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'destinations';
+        value: string | Destination;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: string | Article;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -241,8 +498,19 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
+  displayName?: T;
+  avatar?: T;
+  bio?: T;
+  role?: T;
+  preferredLanguage?: T;
   updatedAt?: T;
   createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
+  hasAPIKey?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
@@ -265,6 +533,7 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -276,6 +545,81 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  color?: T;
+  featured?: T;
+  icon?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations_select".
+ */
+export interface DestinationsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  region?: T;
+  featured?: T;
+  heroImage?: T;
+  overview?: T;
+  travelInfo?:
+    | T
+    | {
+        bestTimeToVisit?: T;
+        altitudeMeters?: T;
+        isUnescoSite?: T;
+      };
+  coordinates?:
+    | T
+    | {
+        latitude?: T;
+        longitude?: T;
+      };
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  heroImage?: T;
+  excerpt?: T;
+  content?: T;
+  author?: T;
+  categories?: T;
+  destinations?: T;
+  publishedDate?: T;
+  readingTimeMinutes?: T;
+  featured?: T;
+  meta?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -1,6 +1,7 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 // Workaround for Next.js 15/16 + React 19 Turbopack dev issue:
 // "Failed to execute 'measure' on 'Performance': 'LoginView' cannot have a negative time stamp."
@@ -42,6 +43,34 @@ if (typeof window !== 'undefined' && !(window as any).__perfMeasurePatched) {
   }
 }
 
-export default function PerformancePatch({ children }: { children?: React.ReactNode }) {
-  return <>{children}</>
+function LocaleSync() {
+  const searchParams = useSearchParams()
+
+  // Automatically sync UI language cookie (payload-lng) with content locale (?locale=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const localeParam = searchParams?.get('locale')
+    if (localeParam && (localeParam === 'am' || localeParam === 'en')) {
+      const match = document.cookie.match(/(?:^|;\s*)payload-lng=([^;]*)/)
+      const currentLngCookie = match ? match[1] : null
+      if (currentLngCookie && currentLngCookie !== localeParam) {
+        document.cookie = `payload-lng=${localeParam}; path=/; max-age=31536000; SameSite=Lax`
+        window.location.reload()
+      }
+    }
+  }, [searchParams])
+
+  return null
 }
+
+export default function PerformancePatch({ children }: { children?: React.ReactNode }) {
+  return (
+    <>
+      <React.Suspense fallback={null}>
+        <LocaleSync />
+      </React.Suspense>
+      {children}
+    </>
+  )
+}
+

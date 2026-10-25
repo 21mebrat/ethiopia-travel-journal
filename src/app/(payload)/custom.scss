@@ -1,0 +1,169 @@
+/* ==========================================================================
+   Ethiopia Tour Blog - Payload Admin Sidebar & Layout Custom Styles
+   ========================================================================== */
+
+/* 1. Theme Variables for Brand-Matched Active Navigation Link */
+:root,
+html[data-theme='dark'],
+[data-theme='dark'] {
+  --nav-link-active-bg: rgba(245, 158, 11, 0.12);
+  --nav-link-active-border: #f59e0b;
+  --nav-link-active-color: #fbbf24;
+}
+
+html[data-theme='light'],
+[data-theme='light'] {
+  --nav-link-active-bg: rgba(217, 119, 6, 0.09);
+  --nav-link-active-border: #d97706;
+  --nav-link-active-color: #b45309;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --nav-link-active-bg: rgba(217, 119, 6, 0.09);
+    --nav-link-active-border: #d97706;
+    --nav-link-active-color: #b45309;
+  }
+}
+
+/* 2. Ensure floating theme toggle stays in the top right corner of login screen */
+.theme-toggle--floating {
+  position: fixed !important;
+  top: 20px !important;
+  right: 24px !important;
+  z-index: 9999 !important;
+}
+
+/* 3. Professional, Minimalist Sidebar Styling (Clean, Solid, No Gradients) */
+.nav {
+  background-color: var(--theme-elevation-0);
+  border-right: 1px solid var(--theme-elevation-150);
+}
+
+.nav__wrap {
+  padding: 10px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-elevation-200) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--theme-elevation-200);
+    border-radius: 4px;
+  }
+}
+
+/* Group Headers (Collections, Globals, etc.) */
+.nav__group,
+.nav-group {
+  margin-bottom: 12px;
+}
+
+.nav .nav__label,
+.nav .nav__group-label,
+.nav .nav-group__label,
+.nav .nav-group__toggle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--theme-elevation-400);
+}
+
+.nav .nav-group__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 4px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  width: 100%;
+
+  &:hover {
+    color: var(--theme-elevation-800);
+  }
+}
+
+/* Professional Nav Links (Solid, Flat, Minimalist - No Gradients) */
+.nav .nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-left: 3px solid transparent;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--theme-elevation-700);
+  text-decoration: none !important;
+  background-color: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--theme-elevation-100);
+    color: var(--theme-elevation-1000);
+    text-decoration: none !important;
+  }
+
+  /* Active Nav Link: Left Border & Brand Color Highlight */
+  &:has(.nav__link-indicator),
+  &.active,
+  &--active,
+  &[aria-current='page'],
+  &[aria-current='true'] {
+    background-color: var(--nav-link-active-bg) !important;
+    border-left: 3px solid var(--nav-link-active-border) !important;
+    color: var(--nav-link-active-color) !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+
+    .nav__link-label {
+      color: var(--nav-link-active-color) !important;
+      font-weight: 600 !important;
+    }
+  }
+}
+
+/* Exact route matches where Payload renders a div instead of an anchor */
+.nav div.nav__link:not(a) {
+  background-color: var(--nav-link-active-bg) !important;
+  border-left: 3px solid var(--nav-link-active-border) !important;
+  color: var(--nav-link-active-color) !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  cursor: default;
+
+  .nav__link-label {
+    color: var(--nav-link-active-color) !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Hide Payload's built-in 2px floating pipe indicator so our 3px left border is clean */
+.nav .nav__link-indicator {
+  display: none !important;
+}
+
+/* Ensure no anchor underline on hover/focus inside nav */
+.nav a.nav__link:hover,
+.nav a.nav__link:focus,
+.nav a.nav__link:focus-visible {
+  text-decoration: none !important;
+  outline: none;
+}
+
+/* Sidebar Footer Controls */
+.nav__controls {
+  padding: 10px 8px 12px;
+  margin-top: auto;
+  border-top: 1px solid var(--theme-elevation-150);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}

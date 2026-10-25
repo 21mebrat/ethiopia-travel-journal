@@ -4,6 +4,10 @@ import config from '../../src/payload.config.js'
 export const testUser = {
   email: 'dev@payloadcms.com',
   password: 'test',
+  firstName: 'Dev',
+  lastName: 'Admin',
+  role: 'admin' as const,
+  preferredLanguage: 'en' as const,
 }
 
 /**
