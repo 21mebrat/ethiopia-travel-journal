@@ -1,32 +1,84 @@
 /* ==========================================================================
-   Ethiopia Tour Blog - Payload Admin Sidebar & Layout Custom Styles
+   Ethiopia Tour Blog — Payload Admin chrome
+   --------------------------------------------------------------------------
+   Tailwind/shadcn tokens live in style.css. This file only styles the
+   Payload-native shell (sidebar + inset content area) and the few details of
+   the custom dashboard-01 sidebar that are easier to express in plain CSS.
+   All interactive navigation markup lives in components/admin/Nav.
    ========================================================================== */
 
-/* 1. Theme Variables for Brand-Matched Active Navigation Link */
-:root,
-html[data-theme='dark'],
-[data-theme='dark'] {
-  --nav-link-active-bg: rgba(245, 158, 11, 0.12);
-  --nav-link-active-border: #f59e0b;
-  --nav-link-active-color: #fbbf24;
+:root {
+  --nav-width: 17rem;
+  --admin-radius: 0.75rem;
+  --admin-gap: 0.5rem;
 }
 
-html[data-theme='light'],
-[data-theme='light'] {
-  --nav-link-active-bg: rgba(217, 119, 6, 0.09);
-  --nav-link-active-border: #d97706;
-  --nav-link-active-color: #b45309;
+/* --------------------------------------------------------------------------
+   1. Inset content surface (dashboard-01 style)
+   -------------------------------------------------------------------------- */
+.template-default {
+  background-color: var(--sidebar);
 }
 
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) {
-    --nav-link-active-bg: rgba(217, 119, 6, 0.09);
-    --nav-link-active-border: #d97706;
-    --nav-link-active-color: #b45309;
+@media (min-width: 1025px) {
+  .template-default__wrap {
+    margin: var(--admin-gap) var(--admin-gap) var(--admin-gap) 0;
+    min-height: calc(100vh - (var(--admin-gap) * 2));
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--admin-radius);
+    overflow: clip;
   }
 }
 
-/* 2. Ensure floating theme toggle stays in the top right corner of login screen */
+/* --------------------------------------------------------------------------
+   2. Sidebar shell
+   -------------------------------------------------------------------------- */
+.nav {
+  width: var(--nav-width);
+  background-color: var(--sidebar);
+  border-right: 0;
+}
+
+.nav__scroll {
+  padding: 0.75rem 0.625rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-border) transparent;
+}
+
+/* Brand mark in the sidebar header */
+.admin-nav__mark {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  border: 1px solid var(--sidebar-border);
+  border-radius: 0.6rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(245, 158, 11, 0.24), transparent 62%),
+    var(--sidebar-accent);
+}
+
+.admin-nav__mark img {
+  width: 1.75rem;
+  height: 1.75rem;
+  object-fit: contain;
+}
+
+/* Payload renders the admin graphics icon inside a fixed 18px home square. */
+.step-nav__home img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* --------------------------------------------------------------------------
+   3. Login screen helper
+   -------------------------------------------------------------------------- */
 .theme-toggle--floating {
   position: fixed !important;
   top: 20px !important;
@@ -34,136 +86,37 @@ html[data-theme='light'],
   z-index: 9999 !important;
 }
 
-/* 3. Professional, Minimalist Sidebar Styling (Clean, Solid, No Gradients) */
-.nav {
-  background-color: var(--theme-elevation-0);
-  border-right: 1px solid var(--theme-elevation-150);
-}
-
-.nav__wrap {
-  padding: 10px 8px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--theme-elevation-200) transparent;
-
-  &::-webkit-scrollbar {
-    width: 4px;
+/* --------------------------------------------------------------------------
+   4. Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .template-default__wrap {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
   }
-  &::-webkit-scrollbar-thumb {
-    background: var(--theme-elevation-200);
-    border-radius: 4px;
+
+  .nav__scroll {
+    padding-inline: 0.75rem;
   }
 }
 
-/* Group Headers (Collections, Globals, etc.) */
-.nav__group,
-.nav-group {
-  margin-bottom: 12px;
-}
-
-.nav .nav__label,
-.nav .nav__group-label,
-.nav .nav-group__label,
-.nav .nav-group__toggle {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--theme-elevation-400);
-}
-
-.nav .nav-group__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px 4px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  width: 100%;
-
-  &:hover {
-    color: var(--theme-elevation-800);
-  }
-}
-
-/* Professional Nav Links (Solid, Flat, Minimalist - No Gradients) */
-.nav .nav__link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  margin: 2px 0;
-  border-left: 3px solid transparent;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--theme-elevation-700);
-  text-decoration: none !important;
-  background-color: transparent;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    background-color: var(--theme-elevation-100);
-    color: var(--theme-elevation-1000);
-    text-decoration: none !important;
+/* On phones the sidebar becomes an overlay drawer instead of squeezing the
+   dashboard into the remaining column. */
+@media (max-width: 768px) {
+  .template-default,
+  .template-default--nav-hydrated,
+  .template-default--nav-open,
+  .template-default--nav-hydrated.template-default--nav-open {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  /* Active Nav Link: Left Border & Brand Color Highlight */
-  &:has(.nav__link-indicator),
-  &.active,
-  &--active,
-  &[aria-current='page'],
-  &[aria-current='true'] {
-    background-color: var(--nav-link-active-bg) !important;
-    border-left: 3px solid var(--nav-link-active-border) !important;
-    color: var(--nav-link-active-color) !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
-
-    .nav__link-label {
-      color: var(--nav-link-active-color) !important;
-      font-weight: 600 !important;
-    }
+  .template-default--nav-open .nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: min(86vw, 20rem);
+    height: 100dvh;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
   }
-}
-
-/* Exact route matches where Payload renders a div instead of an anchor */
-.nav div.nav__link:not(a) {
-  background-color: var(--nav-link-active-bg) !important;
-  border-left: 3px solid var(--nav-link-active-border) !important;
-  color: var(--nav-link-active-color) !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
-  cursor: default;
-
-  .nav__link-label {
-    color: var(--nav-link-active-color) !important;
-    font-weight: 600 !important;
-  }
-}
-
-/* Hide Payload's built-in 2px floating pipe indicator so our 3px left border is clean */
-.nav .nav__link-indicator {
-  display: none !important;
-}
-
-/* Ensure no anchor underline on hover/focus inside nav */
-.nav a.nav__link:hover,
-.nav a.nav__link:focus,
-.nav a.nav__link:focus-visible {
-  text-decoration: none !important;
-  outline: none;
-}
-
-/* Sidebar Footer Controls */
-.nav__controls {
-  padding: 10px 8px 12px;
-  margin-top: auto;
-  border-top: 1px solid var(--theme-elevation-150);
-  display: flex;
-  flex-direction: column;
-  width: 100%;
 }

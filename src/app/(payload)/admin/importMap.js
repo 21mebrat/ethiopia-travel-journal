@@ -21,13 +21,13 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { default as default_965175d01b56876a09418037afb35340 } from '../../../components/admin/Nav'
 import { default as default_8f8437271bb1185a7d11b63d7e5de4b9 } from '../../../components/LogoutButton'
 import { default as default_c6286fbc7f62f2ce3ef9c604e9c02147 } from '../../../components/graphics/Icon'
 import { default as default_e577ad08317d2e8977edf3e679038fc8 } from '../../../components/graphics/Logo'
-import { default as default_f28970f5d8c0ce35403aa497d9382dcc } from '../../../components/AfterDashboard'
-import { default as default_6b5171ba20d0317956f72f91440ed7b5 } from '../../../components/BeforeDashboard'
 import { default as default_9cc7d77b087d31bd6747032c0f7856a6 } from '../../../components/payload/WelcomeMessage'
 import { default as default_9cd8882fee262315f784d672f0dbf3f4 } from '../../../components/payload/PerformancePatch'
+import { default as default_16b88e9b8c48e393fa86591406efd08f } from '../../../components/admin/Dashboard'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -55,12 +55,12 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#UnderlineFeatureClient": UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/components/admin/Nav#default": default_965175d01b56876a09418037afb35340,
   "/components/LogoutButton#default": default_8f8437271bb1185a7d11b63d7e5de4b9,
   "/components/graphics/Icon#default": default_c6286fbc7f62f2ce3ef9c604e9c02147,
   "/components/graphics/Logo#default": default_e577ad08317d2e8977edf3e679038fc8,
-  "/components/AfterDashboard#default": default_f28970f5d8c0ce35403aa497d9382dcc,
-  "/components/BeforeDashboard#default": default_6b5171ba20d0317956f72f91440ed7b5,
   "/components/payload/WelcomeMessage#default": default_9cc7d77b087d31bd6747032c0f7856a6,
   "/components/payload/PerformancePatch#default": default_9cd8882fee262315f784d672f0dbf3f4,
+  "/components/admin/Dashboard#default": default_16b88e9b8c48e393fa86591406efd08f,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

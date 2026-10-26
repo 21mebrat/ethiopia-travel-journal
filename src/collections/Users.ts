@@ -179,10 +179,11 @@ export const Users: CollectionConfig = {
     // - Plain string: 'Administration'
     // - Multilingual object: { en: 'Administration', am: 'አስተዳደር' }
     // - false: Hides this collection from sidebar groupings.
-    group: {
-      en: 'Identity',
-      am: 'ማንነት',
-    },
+    // group: {
+    //   en: 'Identity',
+    //   am: 'ማንነት',
+    // },
+    group: "",
 
     // ------------------------------------------------------------------------
     // `description`: Descriptive Hint for Content Editors

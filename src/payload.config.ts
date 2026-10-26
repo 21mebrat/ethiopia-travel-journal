@@ -35,18 +35,21 @@ export default buildConfig({
       // afterLogin: [
       //   "/components/payload/AfterLogin"
       // ],
-      //componet render above the main dashboard
-      beforeDashboard: [
-        "/components/BeforeDashboard"
-      ],
-      // after dashboard, compoent render below the dashbard page
-      afterDashboard: [
-        "/components/AfterDashboard"
-      ],
-      // component render below the sidebar links
-      // afterNavLinks: [
-      //   "/components/AfterNavLinks"
-      // ],
+      // Custom dashboard view: shadcn/dashboard-01 layout powered by our
+      // Payload collections (articles, destinations, media, users).
+      views: {
+        dashboard: {
+          Component: '/components/admin/Dashboard',
+        },
+      },
+      // Replace the entire sidebar with a shadcn dashboard-01 style nav that
+      // is driven by Payload's collections, permissions and nav context.
+      Nav: '/components/admin/Nav',
+      // Brand block rendered above the collection links in the sidebar.
+      // (Dashboard-01 nav owns its own brand, dashboard link and footer.)
+      // beforeNavLinks: ['/components/admin/SidebarBrand', '/components/admin/DashboardLink'],
+      // Utility links rendered below the collection links.
+      // afterNavLinks: ['/components/admin/SidebarFooterLinks'],
       // graphcs
       graphics: {
         Icon: "/components/graphics/Icon",
