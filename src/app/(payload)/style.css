@@ -182,6 +182,20 @@
 }
 
 /* --------------------------------------------------------------------------
+ * Payload `.table` collision guard
+ * --------------------------------------------------------------------------
+ * The shadcn table primitive contains the token "table", so Tailwind emits a
+ * bare `.table { display: table }` utility. Payload uses `.table` as the list
+ * view layout wrapper (block on desktop, flex column at <=1024px). Reverting
+ * the utility's display value keeps Payload's responsive table layout intact.
+ */
+@layer utilities {
+  .table {
+    display: revert-layer;
+  }
+}
+
+/* --------------------------------------------------------------------------
  * Minimal base layer (no Preflight!)
  * -------------------------------------------------------------------------- */
 @layer base {

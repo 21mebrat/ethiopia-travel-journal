@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Ethiopia Travel Journal — editorial design system
+   --------------------------------------------------------------------------
+   Tokens are the ones already used across the project (see also the admin
+   theme in app/(payload)/style.css). The public site stays monochrome so the
+   photography carries the colour; category accents below are the only
+   exceptions and are used as 6px dots on kickers.
+   ========================================================================== */
+
 @layer base {
   :root {
     --background: oklch(1 0 0);
@@ -35,6 +44,18 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+
+    /* Category accents (decorative dots only) — same lightness/chroma band
+       as the chart tokens so they sit inside the existing palette. */
+    --cat-amber: oklch(0.78 0.14 78);
+    --cat-emerald: oklch(0.7 0.12 162);
+    --cat-crimson: oklch(0.66 0.17 25);
+    --cat-blue: oklch(0.66 0.13 250);
+    --cat-brown: oklch(0.62 0.08 55);
+    --cat-purple: oklch(0.62 0.14 300);
+
+    --site-max: 86rem;
+    --site-gutter: 1.25rem;
   }
 
   .dark,
@@ -72,9 +93,28 @@
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
   }
+
+  @media (min-width: 640px) {
+    :root {
+      --site-gutter: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --site-gutter: 3rem;
+    }
+  }
 }
 
 @theme inline {
+  --font-sans: var(--font-inter), var(--font-noto-sans-ethiopic), ui-sans-serif, system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-source-serif), var(--font-noto-serif-ethiopic), Georgia,
+    'Times New Roman', serif;
+  --font-display: var(--font-playfair), var(--font-noto-serif-ethiopic), Georgia,
+    'Times New Roman', serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -122,120 +162,371 @@
 
   html {
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
     min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: var(--foreground);
+    color: var(--background);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Amharic glyphs need a little more room than Latin ones. */
+  :lang(am) body,
+  :lang(am) p,
+  :lang(am) li {
+    line-height: 1.85;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-/* --------------------------------------------------------------------------
-   Frontend Landing Page Components (Styled with Tweakcn / Shadcn Tokens)
-   -------------------------------------------------------------------------- */
-.home {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 100vh;
-  padding: 3rem 1.5rem;
-  max-width: 1024px;
-  margin: 0 auto;
+/* ==========================================================================
+   Layout helpers
+   ========================================================================== */
+.container-site {
+  width: 100%;
+  max-width: var(--site-max);
+  margin-inline: auto;
+  padding-inline: var(--site-gutter);
+}
 
-  .content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1;
-    text-align: center;
-    gap: 1.5rem;
+.container-narrow {
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-inline: var(--site-gutter);
+}
 
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 5vw, 3.75rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      color: var(--foreground);
-    }
+/* ==========================================================================
+   Editorial type
+   ========================================================================== */
+
+/* Small uppercase label used above headlines, in nav and on chips. */
+.kicker {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.kicker-lg {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+}
+
+.deck {
+  font-family: var(--font-serif);
+  color: var(--muted-foreground);
+  line-height: 1.55;
+}
+
+/* Understated hover underline for inline links (nav, "view all", etc). */
+.link-underline {
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition: background-size 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.link-underline:hover,
+.link-underline:focus-visible {
+  background-size: 100% 1px;
+}
+
+.link-underline[aria-current='page'] {
+  background-size: 100% 1px;
+}
+
+/* ==========================================================================
+   Image treatments
+   ========================================================================== */
+.media-frame {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--muted);
+}
+
+.media-frame img {
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .media-frame img,
+.media-frame:hover img {
+  transform: scale(1.035);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .media-frame img,
+  .media-frame:hover img {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Category accents
+   ========================================================================== */
+[data-cat='amber'] {
+  --cat: var(--cat-amber);
+}
+[data-cat='emerald'] {
+  --cat: var(--cat-emerald);
+}
+[data-cat='crimson'] {
+  --cat: var(--cat-crimson);
+}
+[data-cat='blue'] {
+  --cat: var(--cat-blue);
+}
+[data-cat='brown'] {
+  --cat: var(--cat-brown);
+}
+[data-cat='purple'] {
+  --cat: var(--cat-purple);
+}
+
+.cat-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--cat, currentColor);
+  flex: none;
+}
+
+.cat-text {
+  color: var(--cat, currentColor);
+}
+
+/* ==========================================================================
+   Article body (Lexical rich text)
+   ========================================================================== */
+.prose-editorial {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+.prose-editorial > * + * {
+  margin-top: 1.5em;
+}
+
+.prose-editorial p:empty {
+  display: none;
+}
+
+.prose-editorial h2,
+.prose-editorial h3,
+.prose-editorial h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--foreground);
+}
+
+.prose-editorial h2 {
+  font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2rem);
+  line-height: 1.2;
+  margin-top: 2.2em;
+  margin-bottom: 0.9em;
+}
+
+.prose-editorial h3 {
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem);
+  line-height: 1.25;
+  margin-top: 1.9em;
+  margin-bottom: 0.75em;
+}
+
+.prose-editorial h4 {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+}
+
+.prose-editorial a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--muted-foreground);
+  transition: text-decoration-color 0.2s ease;
+}
+
+.prose-editorial a:hover {
+  text-decoration-color: var(--foreground);
+}
+
+.prose-editorial strong {
+  font-weight: 600;
+}
+
+.prose-editorial blockquote {
+  border-left: 2px solid var(--foreground);
+  padding-left: 1.5rem;
+  margin-block: 2.2em;
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 1.1rem + 1.1vw, 1.75rem);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+.prose-editorial blockquote p {
+  margin: 0;
+}
+
+.prose-editorial ul,
+.prose-editorial ol {
+  padding-left: 1.35em;
+  margin-block: 1.4em;
+}
+
+.prose-editorial ul {
+  list-style: disc;
+}
+
+.prose-editorial ol {
+  list-style: decimal;
+}
+
+.prose-editorial li + li {
+  margin-top: 0.4em;
+}
+
+.prose-editorial li::marker {
+  color: var(--muted-foreground);
+}
+
+.prose-editorial hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 2.5em;
+}
+
+.prose-editorial figure {
+  margin-block: 2.4em;
+}
+
+.prose-editorial img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.prose-editorial figcaption {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  margin-top: 0.65rem;
+}
+
+.prose-editorial > p:first-child::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-size: 3.6em;
+  line-height: 0.82;
+  font-weight: 500;
+  padding-right: 0.09em;
+  margin-top: 0.06em;
+}
+
+@media (max-width: 640px) {
+  .prose-editorial {
+    font-size: 1.0625rem;
   }
 
-  .links {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      padding: 0.65rem 1.25rem;
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .admin {
-      color: var(--primary-foreground);
-      background: var(--primary);
-      border: 1px solid var(--primary);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-      &:hover {
-        opacity: 0.92;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-      }
-    }
-
-    .docs {
-      color: var(--foreground);
-      background: var(--secondary);
-      border: 1px solid var(--border);
-
-      &:hover {
-        background: var(--accent);
-        color: var(--accent-foreground);
-        transform: translateY(-1px);
-      }
-    }
+  .prose-editorial > p:first-child::first-letter {
+    font-size: 3.2em;
   }
+}
 
-  .footer {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--muted-foreground);
-
-    p {
-      margin: 0;
-    }
-
-    .codeLink {
-      text-decoration: none;
-      padding: 0.25rem 0.5rem;
-      background: var(--muted);
-      color: var(--foreground);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.8rem;
-      transition: border-color 0.15s ease;
-
-      &:hover {
-        border-color: var(--primary);
-      }
-    }
+/* ==========================================================================
+   Motion / utility
+   ========================================================================== */
+@keyframes site-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-up {
+  animation: site-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Hide the scrollbar on horizontal chip rails while keeping scrollability. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

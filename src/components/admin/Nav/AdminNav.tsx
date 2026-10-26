@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils'
 import { getNavCopy } from './copy'
 import { NavHeader } from './NavHeader'
 import { NavMain } from './NavMain'
-import { NavSecondary } from './NavSecondary'
 import { NavUser } from './NavUser'
 import type {
   NavCreatePermissions,
@@ -64,9 +63,6 @@ export function AdminNav({
               viewType={viewType}
             />
           </div>
-
-          <NavSecondary className="mt-auto" copy={copy} />
-
           <NavUser copy={copy} user={user} adminRoute={adminRoute} />
         </div>
       </div>

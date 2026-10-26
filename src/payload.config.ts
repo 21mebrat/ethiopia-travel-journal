@@ -13,6 +13,7 @@ import { Articles } from './collections/Articles'
 
 import { en } from '@payloadcms/translations/languages/en'
 import { am } from './i18n/am'
+import { Comments } from './collections/Comments'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -74,7 +75,7 @@ export default buildConfig({
     },
     suppressHydrationWarning: true,
   },
-  collections: [Users, Media, Categories, Destinations, Articles],
+  collections: [Users, Media, Categories, Destinations, Articles, Comments],
   localization: {
     locales: [
       {

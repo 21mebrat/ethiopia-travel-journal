@@ -71,7 +71,7 @@ export function NavUser({ adminRoute, copy, user }: NavUserProps) {
     if (value === 'system') {
       // Payload supports an "auto" mode at runtime but its public type only
       // lists light/dark, so the cast is contained here.
-      ;(setTheme as unknown as (next: 'auto' | 'dark' | 'light') => void)(
+      ; (setTheme as unknown as (next: 'auto' | 'dark' | 'light') => void)(
         'auto',
       )
       return
@@ -171,21 +171,6 @@ export function NavUser({ adminRoute, copy, user }: NavUserProps) {
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem asChild>
-            <a href="/" rel="noreferrer" target="_blank">
-              <Globe />
-              {copy.viewSite}
-            </a>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href="https://payloadcms.com/docs" rel="noreferrer" target="_blank">
-              <BookOpen />
-              {copy.documentation}
-            </a>
-          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 

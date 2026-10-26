@@ -108,9 +108,9 @@ export function NavMain({
               <Link
                 aria-current={item.active ? 'page' : undefined}
                 className={cn(
-                  'group flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium text-sidebar-foreground/90 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+                  'group flex h-8 w-full items-center gap-2 rounded-md px-2  py-6 no-underline  text-lg font-medium text-sidebar-foreground/90 outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring',
                   item.active &&
-                    'bg-sidebar-accent font-semibold text-sidebar-accent-foreground',
+                  'bg-sidebar-accent border-l-4 border-l-amber-700 font-semibold text-sidebar-accent-foreground',
                 )}
                 href={item.href}
                 prefetch={false}

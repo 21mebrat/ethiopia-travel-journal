@@ -101,12 +101,6 @@ export default async function Dashboard(props: AdminViewServerProps) {
             </form>
 
             <div className="flex items-center gap-2">
-              <Button asChild size="sm" variant="outline">
-                <a href="/" rel="noreferrer" target="_blank">
-                  <Globe data-icon="inline-start" />
-                  {copy.viewSite}
-                </a>
-              </Button>
               <Button asChild size="sm">
                 <a href="/admin/collections/articles/create">
                   <Plus data-icon="inline-start" />
