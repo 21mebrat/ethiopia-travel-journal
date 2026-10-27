@@ -83,7 +83,63 @@ export const amTranslations: DefaultTranslationsObject = {
     selectLocaleToCopy: 'ለመገልበጥ ቋንቋ ይምረጡ',
     selectedLocales: 'የተመረጡ ቋንቋዎች',
   },
-}
+  lexical: {
+    checklist: {
+      label: 'Checklist',
+    },
+    heading: {
+      label: 'ርዕስ {{headingLevel}}',
+    },
+    paragraph: {
+      label: 'አንቀጽ',
+      label2: 'መደበኛ ጽሑፍ',
+    },
+    blockquote: {
+      label: 'ጥቅስ (Quote)',
+    },
+    orderedList: {
+      label: 'ቁጥር ያለው ዝርዝር (Ordered List)',
+    },
+    unorderedList: {
+      label: 'ነጥብ ያለው ዝርዝር (Unordered List)',
+    },
+    upload: {
+      label: 'ፋይል ስቀል (Upload)',
+    },
+    relationship: {
+      label: 'ዝምድና (Relationship)',
+    },
+    link: {
+      label: 'አገናኝ (Link)',
+      loadingWithEllipsis: 'በመጫን ላይ...',
+    },
+    horizontalRule: {
+      label: 'አግድም መስመር (Divider)',
+    },
+    blocks: {
+      label: 'ብሎኮች (Blocks)',
+      inlineBlocks: {
+        label: 'የመስመር ውስጥ ብሎኮች',
+      },
+    },
+    align: {
+      alignLeftLabel: 'ወደ ግራ አሰልፍ',
+      alignCenterLabel: 'መሃል አሰልፍ',
+      alignRightLabel: 'ወደ ቀኝ አሰልፍ',
+      alignJustifyLabel: 'እኩል አሰልፍ',
+    },
+    indent: {
+      decreaseLabel: 'ወደ ውጭ አውጣ',
+      increaseLabel: 'ወደ ውስጥ አስገባ',
+    },
+    general: {
+      placeholder: "መጻፍ ይጀምሩ፣ ወይም ለትዕዛዞች '/' ይጫኑ...",
+      slashMenuBasicGroupLabel: 'መሰረታዊ (Basic)',
+      slashMenuListGroupLabel: 'ዝርዝሮች (Lists)',
+      toolbarItemsActive: '{{count}} ንቁ',
+    },
+  },
+} as any
 
 export const am: Language = {
   dateFNSKey: 'en-US',
