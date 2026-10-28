@@ -206,4 +206,15 @@
   ::file-selector-button {
     border-color: var(--border);
   }
+
+  /* Visual Media Layout canvas & stage: zero padding and zero margin */
+  .vml-canvas-root,
+  .vml-canvas-stage,
+  .vml-public-layout,
+  .vml-public-stage {
+    margin: 0 !important;
+    margin-block: 0 !important;
+    padding: 0 !important;
+    padding-block: 0 !important;
+  }
 }

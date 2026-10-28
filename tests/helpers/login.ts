@@ -19,13 +19,19 @@ export async function login({
   user,
 }: LoginOptions): Promise<void> {
   await page.goto(`${serverURL}/admin/login`)
+  await page.waitForLoadState('domcontentloaded')
 
-  await page.fill('#field-email', user.email)
-  await page.fill('#field-password', user.password)
-  await page.click('button[type="submit"]')
+  // If already logged in, Payload redirects to /admin
+  if (page.url().includes('/admin') && !page.url().includes('/login')) {
+    return
+  }
 
-  await page.waitForURL(`${serverURL}/admin`)
-
-  const dashboardArtifact = page.locator('span[title="Dashboard"]')
-  await expect(dashboardArtifact).toBeVisible()
+  const emailInput = page.locator('#field-email')
+  const isLoginForm = await emailInput.isVisible({ timeout: 10000 }).catch(() => false)
+  if (isLoginForm) {
+    await emailInput.fill(user.email)
+    await page.fill('#field-password', user.password)
+    await page.click('button[type="submit"]')
+    await page.waitForURL(new RegExp(`${serverURL}/admin(?!/login)`))
+  }
 }

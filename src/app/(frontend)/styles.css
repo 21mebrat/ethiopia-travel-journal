@@ -556,6 +556,18 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
+/* Visual Media Layout: pure image canvas with zero padding and zero margin */
+.vml-public-layout,
+.vml-public-stage,
+.vml-canvas-root,
+.vml-canvas-stage {
+  margin: 0 !important;
+  margin-block: 0 !important;
+  padding: 0 !important;
+  padding-block: 0 !important;
+  border-width: 0 !important;
+}
+
 @media (max-width: 640px) {
   .rich-text-upload-figure {
     float: none !important;

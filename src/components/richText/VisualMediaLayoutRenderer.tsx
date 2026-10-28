@@ -72,18 +72,19 @@ function Lightbox({
         position: 'fixed',
         inset: 0,
         zIndex: 999999,
-        background: 'rgba(10, 10, 12, 0.94)',
+        background: 'rgba(0, 0, 0, 0.92)',
         backdropFilter: 'blur(16px)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px',
+        padding: 0,
+        margin: 0,
       }}
       onClick={onClose}
     >
       <div
-        style={{ position: 'relative', maxWidth: '92vw', maxHeight: '82vh' }}
+        style={{ position: 'relative', maxWidth: '92vw', maxHeight: '88vh', margin: 0, padding: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -92,25 +93,13 @@ function Lightbox({
           alt={current.alt || 'Ethiopia Travel Journal photo'}
           style={{
             maxWidth: '92vw',
-            maxHeight: '82vh',
+            maxHeight: '88vh',
             objectFit: 'contain',
-            borderRadius: '8px',
+            borderRadius: 'var(--radius, 8px)',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            display: 'block',
           }}
         />
-        {current.caption && (
-          <p
-            style={{
-              textAlign: 'center',
-              color: '#d6d3d1',
-              fontSize: '14px',
-              marginTop: '12px',
-              fontStyle: 'italic',
-            }}
-          >
-            {current.caption}
-          </p>
-        )}
       </div>
 
       {images.length > 1 && (
@@ -266,12 +255,14 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
   )
 
   return (
-    <figure
+    <div
       className="vml-public-layout"
       style={{
-        margin: '2.5rem 0',
+        margin: 0,
+        padding: 0,
         width: '100%',
         position: 'relative',
+        boxSizing: 'border-box',
       }}
     >
       <div
@@ -280,9 +271,11 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
           position: 'relative',
           width: '100%',
           aspectRatio: `${canvasWidth} / ${totalHeight}`,
-          borderRadius: '10px',
           overflow: 'hidden',
-          background: '#fafaf9',
+          margin: 0,
+          padding: 0,
+          background: 'transparent',
+          boxSizing: 'border-box',
         }}
       >
         {cells.map((cell, idx) => {
@@ -292,7 +285,7 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
           const heightPercent = ((cell.height ?? DEFAULT_ROW_HEIGHT) / totalHeight) * 100
 
           const borderRadius =
-            cell.shape === 'sharp' ? '0px' : cell.shape === 'pill' ? '9999px' : '8px'
+            cell.shape === 'sharp' ? '0px' : cell.shape === 'pill' ? '9999px' : 'var(--radius, 8px)'
 
           return (
             <div
@@ -314,8 +307,10 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
                 borderRadius,
                 overflow: 'hidden',
                 cursor: 'zoom-in',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
-                background: '#f5f5f4',
+                margin: 0,
+                padding: 0,
+                background: 'transparent',
+                boxSizing: 'border-box',
                 transition: 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease',
               }}
             >
@@ -327,6 +322,9 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  margin: 0,
+                  padding: 0,
+                  background: 'transparent',
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -344,42 +342,10 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
                   }}
                 />
               </div>
-
-              {cell.caption && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: '8px 12px',
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
-                    color: '#ffffff',
-                    fontSize: '12px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {cell.caption}
-                </div>
-              )}
             </div>
           )
         })}
       </div>
-
-      {(normalizedGrid?.caption || props.caption) && (
-        <figcaption
-          style={{
-            marginTop: '12px',
-            textAlign: 'center',
-            fontSize: '13px',
-            color: '#78716c',
-            fontStyle: 'italic',
-          }}
-        >
-          {normalizedGrid?.caption || props.caption}
-        </figcaption>
-      )}
 
       {/* Lightbox Zoom */}
       {lightboxIndex !== null && allImages.length > 0 && (
@@ -389,6 +355,6 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
           onClose={() => setLightboxIndex(null)}
         />
       )}
-    </figure>
+    </div>
   )
 }

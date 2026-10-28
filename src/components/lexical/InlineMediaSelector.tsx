@@ -208,7 +208,7 @@ export function InlineMediaSelector({
         position: 'fixed',
         inset: 0,
         zIndex: 999999,
-        background: 'rgba(0, 0, 0, 0.55)',
+        background: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'center',
@@ -224,14 +224,15 @@ export function InlineMediaSelector({
           width: '100%',
           maxWidth: '620px',
           maxHeight: '85vh',
-          background: '#ffffff',
-          borderRadius: '16px',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.08)',
+          background: 'var(--card)',
+          borderRadius: 'var(--radius-xl, 16px)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.35)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          color: '#1c1917',
+          fontFamily: 'inherit',
+          color: 'var(--card-foreground)',
           animation: 'media-selector-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1) both',
         }}
       >
@@ -239,11 +240,11 @@ export function InlineMediaSelector({
         <div
           style={{
             padding: '12px 18px',
-            borderBottom: '1px solid #f0eee9',
+            borderBottom: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: '#fafaf9',
+            background: 'var(--muted)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -252,10 +253,10 @@ export function InlineMediaSelector({
               onClick={() => setActiveTab('choose')}
               style={{
                 padding: '6px 14px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md, 8px)',
                 border: 'none',
-                background: activeTab === 'choose' ? '#ffffff' : 'transparent',
-                color: activeTab === 'choose' ? '#d97706' : '#78716c',
+                background: activeTab === 'choose' ? 'var(--card)' : 'transparent',
+                color: activeTab === 'choose' ? 'var(--chart-1, #d97706)' : 'var(--muted-foreground)',
                 fontWeight: 700,
                 fontSize: '13px',
                 cursor: 'pointer',
@@ -269,10 +270,10 @@ export function InlineMediaSelector({
               onClick={() => setActiveTab('upload')}
               style={{
                 padding: '6px 14px',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-md, 8px)',
                 border: 'none',
-                background: activeTab === 'upload' ? '#ffffff' : 'transparent',
-                color: activeTab === 'upload' ? '#d97706' : '#78716c',
+                background: activeTab === 'upload' ? 'var(--card)' : 'transparent',
+                color: activeTab === 'upload' ? 'var(--chart-1, #d97706)' : 'var(--muted-foreground)',
                 fontWeight: 700,
                 fontSize: '13px',
                 cursor: 'pointer',
@@ -291,9 +292,9 @@ export function InlineMediaSelector({
               border: 'none',
               cursor: 'pointer',
               fontSize: '18px',
-              color: '#a8a29e',
+              color: 'var(--muted-foreground)',
               padding: '4px 8px',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-sm, 6px)',
               lineHeight: 1,
             }}
             title="Close (Esc)"
@@ -309,11 +310,11 @@ export function InlineMediaSelector({
             <div
               style={{
                 padding: '12px 18px',
-                borderBottom: '1px solid #f0eee9',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                background: '#ffffff',
+                background: 'var(--card)',
               }}
             >
               <div style={{ position: 'relative', flex: 1 }}>
@@ -323,7 +324,7 @@ export function InlineMediaSelector({
                     left: '10px',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: '#a8a29e',
+                    color: 'var(--muted-foreground)',
                     fontSize: '13px',
                   }}
                 >
@@ -339,12 +340,12 @@ export function InlineMediaSelector({
                     width: '100%',
                     padding: '8px 12px 8px 32px',
                     fontSize: '13px',
-                    border: '1px solid #e7e5e4',
-                    borderRadius: '8px',
+                    border: '1px solid var(--input, var(--border))',
+                    borderRadius: 'var(--radius-md, 8px)',
                     boxSizing: 'border-box',
                     outline: 'none',
-                    background: '#f5f5f4',
-                    color: '#1c1917',
+                    background: 'var(--background)',
+                    color: 'var(--foreground)',
                   }}
                 />
               </div>
@@ -355,15 +356,15 @@ export function InlineMediaSelector({
                   onClick={handleConfirmMultiSelect}
                   style={{
                     padding: '8px 16px',
-                    background: '#d97706',
-                    color: '#ffffff',
+                    background: 'var(--chart-1, #d97706)',
+                    color: 'var(--primary-foreground, #ffffff)',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: 'var(--radius-md, 8px)',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: '0 2px 6px rgba(217,119,6,0.3)',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
                   Insert ({selectedDocsMap.size}) Selected
@@ -381,11 +382,11 @@ export function InlineMediaSelector({
               }}
             >
               {loading && mediaItems.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#a8a29e', fontSize: '13px' }}>
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '13px' }}>
                   Loading media library...
                 </div>
               ) : mediaItems.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#a8a29e', fontSize: '13px' }}>
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '13px' }}>
                   {searchQuery ? 'No matching images found' : 'No images in media library yet'}
                 </div>
               ) : (
@@ -406,9 +407,9 @@ export function InlineMediaSelector({
                         key={item.id}
                         onClick={() => toggleItemSelection(item)}
                         style={{
-                          background: isChecked ? '#fffbeb' : '#ffffff',
-                          border: isChecked ? '2px solid #d97706' : '1px solid #e7e5e4',
-                          borderRadius: '10px',
+                          background: isChecked ? 'var(--accent)' : 'var(--card)',
+                          border: isChecked ? '2px solid var(--chart-1, #d97706)' : '1px solid var(--border)',
+                          borderRadius: 'var(--radius-lg, 10px)',
                           padding: '5px',
                           display: 'flex',
                           flexDirection: 'column',
@@ -427,12 +428,12 @@ export function InlineMediaSelector({
                             right: '8px',
                             width: '18px',
                             height: '18px',
-                            borderRadius: '4px',
-                            background: isChecked ? '#d97706' : 'rgba(0,0,0,0.35)',
+                            borderRadius: 'var(--radius-sm, 4px)',
+                            background: isChecked ? 'var(--chart-1, #d97706)' : 'var(--muted)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#ffffff',
+                            color: 'var(--primary-foreground, #ffffff)',
                             fontSize: '11px',
                             fontWeight: 800,
                             zIndex: 10,
@@ -445,9 +446,9 @@ export function InlineMediaSelector({
                           style={{
                             width: '100%',
                             height: '80px',
-                            borderRadius: '6px',
+                            borderRadius: 'var(--radius-sm, 6px)',
                             overflow: 'hidden',
-                            background: '#f5f5f4',
+                            background: 'var(--muted)',
                             position: 'relative',
                             display: 'flex',
                             alignItems: 'center',
@@ -474,7 +475,7 @@ export function InlineMediaSelector({
                             marginTop: '5px',
                             fontSize: '11px',
                             fontWeight: 600,
-                            color: '#292524',
+                            color: 'var(--foreground)',
                             width: '100%',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -485,7 +486,7 @@ export function InlineMediaSelector({
                           {item.filename}
                         </span>
                         {item.width && item.height && (
-                          <span style={{ fontSize: '9px', color: '#a8a29e' }}>
+                          <span style={{ fontSize: '9px', color: 'var(--muted-foreground)' }}>
                             {item.width}×{item.height}
                           </span>
                         )}
@@ -506,13 +507,13 @@ export function InlineMediaSelector({
                       }}
                       style={{
                         padding: '7px 18px',
-                        background: '#f5f5f4',
-                        border: '1px solid #d6d3d1',
-                        borderRadius: '8px',
+                        background: 'var(--secondary)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius-md, 8px)',
                         fontSize: '12px',
                         fontWeight: 600,
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        color: '#44403c',
+                        color: 'var(--secondary-foreground)',
                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                       }}
                     >
@@ -550,8 +551,8 @@ export function InlineMediaSelector({
                   if (f) handleFileSelect(f)
                 }}
                 style={{
-                  border: '2px dashed #d97706',
-                  borderRadius: '12px',
+                  border: '2px dashed var(--chart-1, #d97706)',
+                  borderRadius: 'var(--radius-lg, 12px)',
                   padding: '36px 20px',
                   textAlign: 'center',
                   cursor: 'pointer',
@@ -559,14 +560,14 @@ export function InlineMediaSelector({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '8px',
-                  background: '#fffbeb',
+                  background: 'var(--accent)',
                 }}
               >
                 <span style={{ fontSize: '36px' }}>☁️</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#92400e' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--foreground)' }}>
                   Click to browse or drag & drop an image here
                 </span>
-                <span style={{ fontSize: '12px', color: '#b45309' }}>
+                <span style={{ fontSize: '12px', color: 'var(--muted-foreground)' }}>
                   PNG, JPG, WebP, AVIF up to 20MB
                 </span>
               </div>
@@ -577,17 +578,17 @@ export function InlineMediaSelector({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    background: '#f5f5f4',
+                    background: 'var(--muted)',
                     padding: '10px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid #e7e5e4',
+                    borderRadius: 'var(--radius-md, 8px)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <span
                     style={{
                       fontSize: '13px',
                       fontWeight: 600,
-                      color: '#1c1917',
+                      color: 'var(--foreground)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -601,7 +602,7 @@ export function InlineMediaSelector({
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#d97706',
+                      color: 'var(--chart-1, #d97706)',
                       cursor: 'pointer',
                       fontSize: '12px',
                       fontWeight: 700,
@@ -617,7 +618,7 @@ export function InlineMediaSelector({
                       display: 'block',
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#44403c',
+                      color: 'var(--foreground)',
                       marginBottom: '4px',
                     }}
                   >
@@ -632,9 +633,10 @@ export function InlineMediaSelector({
                       width: '100%',
                       padding: '8px 12px',
                       fontSize: '13px',
-                      borderRadius: '8px',
-                      border: '1px solid #d6d3d1',
-                      background: '#ffffff',
+                      borderRadius: 'var(--radius-md, 8px)',
+                      border: '1px solid var(--border)',
+                      background: 'var(--background)',
+                      color: 'var(--foreground)',
                       boxSizing: 'border-box',
                     }}
                   />
@@ -644,10 +646,10 @@ export function InlineMediaSelector({
                   <div
                     style={{
                       fontSize: '12px',
-                      color: '#b91c1c',
-                      background: '#fee2e2',
+                      color: 'var(--destructive-foreground, #ffffff)',
+                      background: 'var(--destructive)',
                       padding: '8px 12px',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-md, 8px)',
                     }}
                   >
                     ⚠️ {uploadError}
@@ -661,12 +663,12 @@ export function InlineMediaSelector({
                     disabled={isUploading}
                     style={{
                       padding: '8px 16px',
-                      background: '#f5f5f4',
-                      border: '1px solid #d6d3d1',
-                      borderRadius: '8px',
+                      background: 'var(--secondary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-md, 8px)',
                       fontSize: '13px',
                       fontWeight: 600,
-                      color: '#44403c',
+                      color: 'var(--secondary-foreground)',
                       cursor: 'pointer',
                     }}
                   >
@@ -678,12 +680,12 @@ export function InlineMediaSelector({
                     disabled={isUploading}
                     style={{
                       padding: '8px 20px',
-                      background: '#d97706',
+                      background: 'var(--chart-1, var(--primary))',
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--radius-md, 8px)',
                       fontSize: '13px',
                       fontWeight: 700,
-                      color: '#ffffff',
+                      color: 'var(--primary-foreground, #ffffff)',
                       cursor: isUploading ? 'not-allowed' : 'pointer',
                     }}
                   >
@@ -699,13 +701,13 @@ export function InlineMediaSelector({
         <div
           style={{
             padding: '10px 18px',
-            borderTop: '1px solid #f0eee9',
+            borderTop: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: '#fafaf9',
+            background: 'var(--muted)',
             fontSize: '12px',
-            color: '#78716c',
+            color: 'var(--muted-foreground)',
           }}
         >
           <span>
@@ -720,13 +722,13 @@ export function InlineMediaSelector({
             onClick={onClose}
             style={{
               padding: '5px 12px',
-              borderRadius: '6px',
-              border: '1px solid #d6d3d1',
-              background: '#ffffff',
+              borderRadius: 'var(--radius-sm, 6px)',
+              border: '1px solid var(--border)',
+              background: 'var(--card)',
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
-              color: '#44403c',
+              color: 'var(--card-foreground)',
             }}
           >
             Cancel

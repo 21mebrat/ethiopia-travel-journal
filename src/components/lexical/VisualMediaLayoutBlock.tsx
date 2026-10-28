@@ -423,25 +423,26 @@ export default function VisualMediaLayoutBlock(props: any) {
       <div
         className="vml-empty-canvas"
         style={{
-          margin: '2rem 0',
-          padding: '28px 20px',
-          border: '1.5px dashed #d6d3d1',
-          borderRadius: '12px',
+          margin: 0,
+          padding: '24px 16px',
+          border: '1.5px dashed var(--border)',
+          borderRadius: 'var(--radius)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '12px',
-          background: '#fafaf9',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          background: 'var(--card)',
+          boxSizing: 'border-box',
+          fontFamily: 'inherit',
         }}
       >
         <span style={{ fontSize: '28px' }}>🖼️</span>
         <div style={{ textAlign: 'center' }}>
-          <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#1c1917' }}>
+          <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: 'var(--foreground)' }}>
             Insert Media Layout
           </h4>
-          <p style={{ margin: 0, fontSize: '12px', color: '#78716c' }}>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--muted-foreground)' }}>
             Choose an existing image or upload a new photo to begin arranging your layout
           </p>
         </div>
@@ -456,17 +457,17 @@ export default function VisualMediaLayoutBlock(props: any) {
             }}
             style={{
               padding: '8px 16px',
-              background: '#d97706',
-              color: '#ffffff',
+              background: 'var(--chart-1, #d97706)',
+              color: 'var(--primary-foreground, #ffffff)',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-md, 8px)',
               fontSize: '12px',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 2px 6px rgba(217, 119, 6, 0.25)',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
             }}
           >
             <span>+</span>
@@ -481,10 +482,10 @@ export default function VisualMediaLayoutBlock(props: any) {
             }}
             style={{
               padding: '8px 16px',
-              background: '#ffffff',
-              color: '#1c1917',
-              border: '1px solid #d6d3d1',
-              borderRadius: '8px',
+              background: 'var(--secondary)',
+              color: 'var(--secondary-foreground)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md, 8px)',
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -522,7 +523,8 @@ export default function VisualMediaLayoutBlock(props: any) {
       className="vml-canvas-root"
       style={{
         position: 'relative',
-        margin: '2rem 0',
+        margin: 0,
+        padding: 0,
         width: '100%',
         boxSizing: 'border-box',
         userSelect: activeGestureRef.current ? 'none' : 'auto',
@@ -537,15 +539,16 @@ export default function VisualMediaLayoutBlock(props: any) {
             left: `${hud.x}px`,
             top: `${hud.y - 32}px`,
             transform: 'translateX(-50%)',
-            background: '#1c1917',
-            color: '#fbbf24',
+            background: 'var(--popover)',
+            color: 'var(--popover-foreground)',
+            border: '1px solid var(--border)',
             padding: '4px 10px',
-            borderRadius: '6px',
+            borderRadius: 'var(--radius-sm, 6px)',
             fontSize: '11px',
             fontWeight: 700,
             fontFamily: 'monospace',
             zIndex: 999999,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
             pointerEvents: 'none',
           }}
         >
@@ -563,8 +566,9 @@ export default function VisualMediaLayoutBlock(props: any) {
           aspectRatio: `${canvasWidth} / ${totalHeight}`,
           boxSizing: 'border-box',
           minHeight: '200px',
-          background: '#fafaf9',
-          borderRadius: '10px',
+          margin: 0,
+          padding: 0,
+          background: 'transparent',
           overflow: 'hidden',
         }}
       >
@@ -579,7 +583,7 @@ export default function VisualMediaLayoutBlock(props: any) {
           const heightPercent = ((cell.height ?? MIN_CELL_HEIGHT) / totalHeight) * 100
 
           const borderRadius =
-            cell.shape === 'sharp' ? '0px' : cell.shape === 'pill' ? '9999px' : '8px'
+            cell.shape === 'sharp' ? '0px' : cell.shape === 'pill' ? '9999px' : 'var(--radius, 8px)'
 
           return (
             <div
@@ -598,19 +602,22 @@ export default function VisualMediaLayoutBlock(props: any) {
                 top: `${topPercent}%`,
                 width: `${widthPercent}%`,
                 height: `${heightPercent}%`,
+                margin: 0,
+                padding: 0,
+                boxSizing: 'border-box',
                 borderRadius,
                 overflow: 'visible',
                 cursor: isGesturingThis ? 'grabbing' : 'grab',
                 opacity: isGesturingThis ? 0.9 : 1,
                 touchAction: 'none',
                 outline: isSelected
-                  ? '2.5px solid #d97706'
+                  ? '2.5px solid var(--chart-1, #d97706)'
                   : isHovered
-                  ? '1.5px dashed rgba(217, 119, 6, 0.5)'
+                  ? '1.5px dashed var(--chart-1, #d97706)'
                   : 'none',
                 boxShadow: isSelected
-                  ? '0 0 0 2px rgba(217, 119, 6, 0.25), 0 8px 24px rgba(0,0,0,0.12)'
-                  : '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  ? '0 0 0 2px var(--ring, rgba(217, 119, 6, 0.25)), 0 8px 24px rgba(0,0,0,0.12)'
+                  : 'none',
                 transition: isGesturingThis ? 'none' : 'box-shadow 0.15s, outline 0.15s',
                 zIndex: isGesturingThis ? 30 : isSelected ? 20 : 10,
               }}
@@ -624,7 +631,9 @@ export default function VisualMediaLayoutBlock(props: any) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#f5f5f4',
+                  margin: 0,
+                  padding: 0,
+                  background: 'transparent',
                   borderRadius,
                   overflow: 'hidden',
                   pointerEvents: 'none',
@@ -656,11 +665,13 @@ export default function VisualMediaLayoutBlock(props: any) {
                     display: 'flex',
                     gap: '4px',
                     zIndex: 40,
-                    background: 'rgba(15, 23, 42, 0.85)',
+                    background: 'var(--popover)',
+                    color: 'var(--popover-foreground)',
+                    border: '1px solid var(--border)',
                     backdropFilter: 'blur(8px)',
                     padding: '3px 6px',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                    borderRadius: 'var(--radius-sm, 6px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                   }}
                 >
                   <button
@@ -674,12 +685,12 @@ export default function VisualMediaLayoutBlock(props: any) {
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#ffffff',
+                      color: 'var(--foreground)',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
                       padding: '2px 6px',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--radius-sm, 4px)',
                     }}
                     title="Replace with another image"
                   >
@@ -694,12 +705,12 @@ export default function VisualMediaLayoutBlock(props: any) {
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: '#f87171',
+                      color: 'var(--destructive)',
                       fontSize: '12px',
                       fontWeight: 800,
                       cursor: 'pointer',
                       padding: '2px 4px',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--radius-sm, 4px)',
                     }}
                     title="Delete image"
                   >
@@ -722,7 +733,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                       transform: 'translateX(-50%)',
                       width: '32px',
                       height: '8px',
-                      background: '#d97706',
+                      background: 'var(--chart-1, #d97706)',
                       borderRadius: '9999px',
                       zIndex: 35,
                       cursor: 'ns-resize',
@@ -741,7 +752,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                       transform: 'translateX(-50%)',
                       width: '32px',
                       height: '8px',
-                      background: '#d97706',
+                      background: 'var(--chart-1, #d97706)',
                       borderRadius: '9999px',
                       zIndex: 35,
                       cursor: 'ns-resize',
@@ -760,7 +771,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                       transform: 'translateY(-50%)',
                       width: '8px',
                       height: '32px',
-                      background: '#d97706',
+                      background: 'var(--chart-1, #d97706)',
                       borderRadius: '9999px',
                       zIndex: 35,
                       cursor: 'ew-resize',
@@ -779,7 +790,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                       transform: 'translateY(-50%)',
                       width: '8px',
                       height: '32px',
-                      background: '#d97706',
+                      background: 'var(--chart-1, #d97706)',
                       borderRadius: '9999px',
                       zIndex: 35,
                       cursor: 'ew-resize',
@@ -797,9 +808,9 @@ export default function VisualMediaLayoutBlock(props: any) {
                       left: '-6px',
                       width: '12px',
                       height: '12px',
-                      background: '#ffffff',
-                      border: '2px solid #d97706',
-                      borderRadius: '3px',
+                      background: 'var(--card, #ffffff)',
+                      border: '2px solid var(--chart-1, #d97706)',
+                      borderRadius: 'var(--radius-sm, 3px)',
                       zIndex: 36,
                       cursor: 'nwse-resize',
                       touchAction: 'none',
@@ -817,9 +828,9 @@ export default function VisualMediaLayoutBlock(props: any) {
                       right: '-6px',
                       width: '12px',
                       height: '12px',
-                      background: '#ffffff',
-                      border: '2px solid #d97706',
-                      borderRadius: '3px',
+                      background: 'var(--card, #ffffff)',
+                      border: '2px solid var(--chart-1, #d97706)',
+                      borderRadius: 'var(--radius-sm, 3px)',
                       zIndex: 36,
                       cursor: 'nesw-resize',
                       touchAction: 'none',
@@ -837,9 +848,9 @@ export default function VisualMediaLayoutBlock(props: any) {
                       left: '-6px',
                       width: '12px',
                       height: '12px',
-                      background: '#ffffff',
-                      border: '2px solid #d97706',
-                      borderRadius: '3px',
+                      background: 'var(--card, #ffffff)',
+                      border: '2px solid var(--chart-1, #d97706)',
+                      borderRadius: 'var(--radius-sm, 3px)',
                       zIndex: 36,
                       cursor: 'nesw-resize',
                       touchAction: 'none',
@@ -857,9 +868,9 @@ export default function VisualMediaLayoutBlock(props: any) {
                       right: '-6px',
                       width: '12px',
                       height: '12px',
-                      background: '#ffffff',
-                      border: '2px solid #d97706',
-                      borderRadius: '3px',
+                      background: 'var(--card, #ffffff)',
+                      border: '2px solid var(--chart-1, #d97706)',
+                      borderRadius: 'var(--radius-sm, 3px)',
                       zIndex: 36,
                       cursor: 'nwse-resize',
                       touchAction: 'none',
@@ -878,7 +889,7 @@ export default function VisualMediaLayoutBlock(props: any) {
         style={{
           display: 'flex',
           justifyContent: 'center',
-          marginTop: '8px',
+          marginTop: '6px',
           opacity: selectedCellId ? 1 : 0,
           transition: 'opacity 0.2s',
         }}
@@ -893,10 +904,9 @@ export default function VisualMediaLayoutBlock(props: any) {
           }}
           style={{
             padding: '4px 12px',
-            background: 'rgba(15, 23, 42, 0.85)',
-            backdropFilter: 'blur(8px)',
-            color: '#fbbf24',
-            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'var(--card)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border)',
             borderRadius: '9999px',
             fontSize: '11px',
             fontWeight: 700,
@@ -904,10 +914,10 @@ export default function VisualMediaLayoutBlock(props: any) {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
           }}
         >
-          <span>+</span>
+          <span style={{ color: 'var(--chart-1, #d97706)' }}>+</span>
           <span>Add More Images to Layout</span>
         </button>
       </div>

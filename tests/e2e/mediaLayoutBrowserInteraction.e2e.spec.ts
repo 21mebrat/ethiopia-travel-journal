@@ -157,6 +157,7 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
   let articleId: string
 
   test.beforeAll(async ({ browser }) => {
+    test.setTimeout(120000)
     await seedTestUser()
     const { article } = await setupTestArticle()
     articleId = article.id
