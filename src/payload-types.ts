@@ -350,7 +350,7 @@ export interface Article {
    */
   excerpt: string;
   /**
-   * Full article body. Supports headings, images, quotes, links, and formatted text.
+   * Full article body. Supports headings, images, quotes, links, formatted text, and Telegram-style media collages.
    */
   content: {
     root: {

@@ -1,4 +1,7 @@
 import type { CollectionConfig, Where } from 'payload'
+import { BlocksFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
+import { ImageGallery } from '../blocks/ImageGallery'
+import { VisualMediaLayout } from '../blocks/VisualMediaLayout'
 
 /**
  * ============================================================================
@@ -297,7 +300,7 @@ export const Articles: CollectionConfig = {
     // The large cover photo rendered at the top of the article and on blog cards.
     {
       name: 'heroImage',
-      type: 'upload',
+      type: 'relationship',
       relationTo: 'media',
       required: true,
       label: {
@@ -358,14 +361,25 @@ export const Articles: CollectionConfig = {
       type: 'richText',
       required: true,
       localized: true, // Multilingual rich text
+      editor: lexicalEditor({
+        features: ({ defaultFeatures }) => [
+          ...defaultFeatures.filter((f) => f.key !== 'upload'),
+          // 1. Single Media Upload: Default upload with zero form drawer inputs; resized & positioned directly on canvas by mouse cursor
+          UploadFeature(),
+          // 2. Visual Media Layout: 100% mouse-driven visual drag-and-drop freeform grid builder with proportional column resizers & inline media selector
+          BlocksFeature({
+            blocks: [VisualMediaLayout, ImageGallery],
+          }),
+        ],
+      }),
       label: {
         en: 'Article Body Content',
         am: 'የጽሑፉ ዋና ይዘት',
       },
       admin: {
         description: {
-          en: 'Full article body. Supports headings, images, quotes, links, and formatted text.',
-          am: 'ሙሉው የጽሑፍ ይዘት። ርዕሶችን፣ ምስሎችን፣ ጥቅሶችን እና ቅርጸቶችን ይደግፋል።',
+          en: 'Full article body. Supports headings, images, quotes, links, formatted text, and Telegram-style media collages.',
+          am: 'ሙሉው የጽሑፍ ይዘት። ርዕሶችን፣ ምስሎችን፣ ጥቅሶችን፣ ቅርጸቶችን እና የቴሌግራም ስታይል የፎቶ አቀማመጦችን ይደግፋል።',
         },
       },
     },

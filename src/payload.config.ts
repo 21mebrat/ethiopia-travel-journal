@@ -1,5 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
-import { BlocksFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
+import { BlocksFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -11,6 +11,7 @@ import { Categories } from './collections/Categories'
 import { Destinations } from './collections/Destinations'
 import { Articles } from './collections/Articles'
 import { ImageGallery } from './blocks/ImageGallery'
+import { VisualMediaLayout } from './blocks/VisualMediaLayout'
 
 import { en } from '@payloadcms/translations/languages/en'
 import { am } from './i18n/am'
@@ -21,9 +22,10 @@ const dirname = path.dirname(filename)
 
 const configuredEditor = lexicalEditor({
   features: ({ defaultFeatures }) => [
-    ...defaultFeatures,
+    ...defaultFeatures.filter((f) => f.key !== 'upload'),
+    UploadFeature(),
     BlocksFeature({
-      blocks: [ImageGallery],
+      blocks: [ImageGallery, VisualMediaLayout],
     }),
   ],
 })
@@ -73,9 +75,9 @@ export default buildConfig({
   admin: {
     avatar: "default",
     autoLogin: process.env.NODE_ENV === "development" ? {
-      email: "dev@payloadcms.com",
+      email: "maytotmat@gmail.com",
       password: "test",
-      prefillOnly: true,
+      prefillOnly: false,
     } : false,
     autoRefresh: true,
     components: {
@@ -117,7 +119,8 @@ export default buildConfig({
       // ],
       // providers render the top navbar
       providers: [
-        "/components/payload/PerformancePatch"
+        "/components/payload/PerformancePatch",
+        "/components/payload/MediaEditorEnhancer"
       ]
     },
     user: Users.slug,

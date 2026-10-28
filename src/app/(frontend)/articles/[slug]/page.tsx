@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { RichText } from '@payloadcms/richtext-lexical/react'
+import { articleJSXConverters } from '@/components/richText/converters'
 import type { Metadata } from 'next'
 
 type Props = {
@@ -458,7 +459,7 @@ export default async function ArticlePage({ params, searchParams }: Props) {
               color: '#292524',
             }}
           >
-            <RichText data={article.content} />
+            <RichText data={article.content} converters={articleJSXConverters} />
           </div>
         )}
       </main>

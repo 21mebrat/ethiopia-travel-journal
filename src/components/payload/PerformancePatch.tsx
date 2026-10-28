@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import MediaEditorEnhancer from './MediaEditorEnhancer'
 
 // Workaround for Next.js 15/16 + React 19 Turbopack dev issue:
 // "Failed to execute 'measure' on 'Performance': 'LoginView' cannot have a negative time stamp."
@@ -69,6 +70,7 @@ export default function PerformancePatch({ children }: { children?: React.ReactN
       <React.Suspense fallback={null}>
         <LocaleSync />
       </React.Suspense>
+      <MediaEditorEnhancer />
       {children}
     </>
   )

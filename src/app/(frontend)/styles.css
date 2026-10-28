@@ -530,3 +530,66 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ==========================================================================
+   Article Rich Text & Media Layout Enhancements (Telegram-style & Resizing)
+   ========================================================================== */
+.article-rich-text::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.article-rich-text h1,
+.article-rich-text h2,
+.article-rich-text h3,
+.article-rich-text hr {
+  clear: both;
+}
+
+.media-layout-item {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.media-layout-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+@media (max-width: 640px) {
+  .rich-text-upload-figure {
+    float: none !important;
+    margin: 1.5rem auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .vml-canvas-stage,
+  .vml-public-stage {
+    aspect-ratio: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    height: auto !important;
+  }
+
+  .vml-canvas-stage > .vml-image-cell,
+  .vml-public-stage > .vml-public-cell {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 220px !important;
+  }
+
+  .vml-public-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .vml-public-cell {
+    grid-column: span 1 !important;
+    grid-row: auto !important;
+  }
+}
+
