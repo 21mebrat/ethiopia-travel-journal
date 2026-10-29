@@ -55,5 +55,27 @@ export const VisualMediaLayout: Block = {
         hidden: true,
       },
     },
+    {
+      name: 'images',
+      type: 'array',
+      admin: {
+        hidden: true,
+      },
+      fields: [
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+        },
+        {
+          name: 'caption',
+          type: 'text',
+        },
+        {
+          name: 'altText',
+          type: 'text',
+        },
+      ],
+    },
   ],
 }

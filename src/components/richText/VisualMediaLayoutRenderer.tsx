@@ -205,10 +205,22 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
   // Fallback from legacy images array if present
   if (cells.length === 0 && props.images && props.images.length > 0) {
     const entries = props.images
-      .map((entry: any) => ({
-        entry,
-        doc: entry.image && typeof entry.image === 'object' ? entry.image : null,
-      }))
+      .map((entry: any) => {
+        let doc = entry.image && typeof entry.image === 'object' ? entry.image : null
+        if (!doc && entry.image && typeof entry.image === 'string') {
+          const found = (props.mediaItems || []).find(
+            (m: any) => (typeof m === 'object' ? m.id === entry.image : m === entry.image)
+          )
+          if (found && typeof found === 'object' && found.url) {
+            doc = found
+          } else {
+            doc = { id: entry.image, url: entry.url || `/media/${entry.image}` }
+          }
+        } else if (!doc && entry.url) {
+          doc = { id: entry.id || 'legacy', url: entry.url }
+        }
+        return { entry, doc }
+      })
       .filter(({ doc }) => Boolean(doc?.url))
 
     const columns = Math.max(1, Math.min(2, entries.length))
@@ -236,6 +248,11 @@ export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps)
       rows: Math.max(1, Math.ceil(cells.length / columns)),
     }
   }
+
+  // Normalize completed layout before rendering so that legacy fallback images
+  // receive distinct, non-overlapping continuous 2D design coordinates (x, y, width, height)
+  normalizedGrid = ensureDesignCoordinates(normalizedGrid)
+  cells = normalizedGrid.cells
 
   if (cells.length === 0) return null
 

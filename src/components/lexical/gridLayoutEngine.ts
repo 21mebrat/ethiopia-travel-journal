@@ -549,6 +549,62 @@ export function findNextFreePosition(
 }
 
 /**
+ * Finds the first unoccupied 2D coordinate box that fits within CANVAS_WIDTH without colliding with any existing cell.
+ * Evaluates candidate positions along horizontal and vertical scanlines, strictly preserving existing images'
+ * positions and dimensions.
+ */
+export function findNextFreeBox(
+  cells: GridCell[],
+  desiredWidth: number,
+  desiredHeight = DEFAULT_ROW_HEIGHT,
+  gap = DEFAULT_GAP,
+  canvasWidth = CANVAS_WIDTH,
+): { x: number; y: number; width: number; height: number } {
+  const width = Math.max(MIN_CELL_WIDTH, Math.min(canvasWidth, desiredWidth))
+  const height = Math.max(MIN_CELL_HEIGHT, desiredHeight)
+
+  if (cells.length === 0) {
+    return { x: 0, y: 0, width, height }
+  }
+
+  // Ensure all existing cells have defined design coordinates
+  const boxes = cells.map((c) => ({
+    x: c.x ?? 0,
+    y: c.y ?? 0,
+    width: c.width ?? MIN_CELL_WIDTH,
+    height: c.height ?? MIN_CELL_HEIGHT,
+  }))
+
+  // Collect candidate Y coordinates: 0, and bottom + gap of each box
+  const yCandidates = Array.from(new Set([0, ...boxes.map((b) => b.y + b.height + gap)])).sort((a, b) => a - b)
+
+  // Collect candidate X coordinates: 0, and right + gap of each box
+  const xCandidates = Array.from(new Set([0, ...boxes.map((b) => b.x + b.width + gap)])).sort((a, b) => a - b)
+
+  for (const y of yCandidates) {
+    for (const x of xCandidates) {
+      if (x + width > canvasWidth) continue
+
+      const candidate = { x, y, width, height }
+      const overlaps = boxes.some((b) => doBoxesOverlap(candidate, b, 1))
+
+      if (!overlaps) {
+        return candidate
+      }
+    }
+  }
+
+  // Fallback: place on a new row below all existing boxes
+  const lowestBottom = Math.max(...boxes.map((b) => b.y + b.height), 0)
+  return {
+    x: 0,
+    y: lowestBottom + gap,
+    width,
+    height,
+  }
+}
+
+/**
  * Inserts one or more media docs into the grid without data loss or coordinate collision.
  */
 export function insertMediaDocs(grid: VisualGridData, docs: MediaDocItem[]): VisualGridData {
@@ -600,10 +656,19 @@ export function insertMediaDocs(grid: VisualGridData, docs: MediaDocItem[]): Vis
     }
   }
 
-  // Adding more images into an existing grid:
-  const currentCells = [...grid.cells]
+  // Adding more images into an existing grid using exact 2D continuous collision-free allocation:
+  const ensured = ensureDesignCoordinates(grid)
+  const currentCells = ensured.cells.map((c) => ({ ...c }))
+  const colCount = Math.max(1, ensured.columns || 1)
+  const defaultColWidth = Math.round((CANVAS_WIDTH - (colCount - 1) * DEFAULT_GAP) / colCount)
+
   docs.forEach((doc) => {
-    const { col, row } = findNextFreePosition(currentCells, grid.columns, 1, 1)
+    const box = findNextFreeBox(currentCells, defaultColWidth, DEFAULT_ROW_HEIGHT, DEFAULT_GAP, CANVAS_WIDTH)
+    const colStart = Math.max(1, Math.min(colCount, Math.round(box.x / (defaultColWidth + DEFAULT_GAP)) + 1))
+    const colSpan = Math.max(1, Math.min(colCount - colStart + 1, Math.round(box.width / defaultColWidth)))
+    const rowStart = Math.max(1, Math.round(box.y / (DEFAULT_ROW_HEIGHT + DEFAULT_GAP)) + 1)
+    const rowSpan = Math.max(1, Math.round(box.height / (DEFAULT_ROW_HEIGHT + DEFAULT_GAP)))
+
     const cell: GridCell = {
       id: uid(),
       mediaId: doc.id,
@@ -612,18 +677,15 @@ export function insertMediaDocs(grid: VisualGridData, docs: MediaDocItem[]): Vis
       alt: doc.alt || doc.filename,
       caption: doc.caption,
       objectFit: doc.objectFit,
-      colStart: col,
-      colSpan: 1,
-      rowStart: row,
-      rowSpan: 1,
+      colStart,
+      colSpan,
+      rowStart,
+      rowSpan,
       aspectRatio: 'auto',
       shape: 'rounded',
-    }
-    const box = computeCellBoxFromGrid(cell, grid.columns, grid.columnTracks)
-    currentCells.push({
-      ...cell,
       ...box,
-    })
+    }
+    currentCells.push(cell)
   })
 
   const maxRow = currentCells.reduce((max, c) => Math.max(max, c.rowStart + c.rowSpan - 1), 1)
@@ -633,7 +695,7 @@ export function insertMediaDocs(grid: VisualGridData, docs: MediaDocItem[]): Vis
   )
 
   return {
-    ...grid,
+    ...ensured,
     version: 2,
     cells: currentCells,
     rows: maxRow,

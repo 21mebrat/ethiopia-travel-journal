@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getNodeByKey } from 'lexical'
-import { useForm, useFormFields } from '@payloadcms/ui'
+import { useForm, useFormFields, useDocumentForm } from '@payloadcms/ui'
+import { useBlockComponentContext } from '@payloadcms/richtext-lexical/client'
 import { InlineMediaSelector, type MediaDoc } from './InlineMediaSelector'
 import {
   type GridCell,
@@ -46,13 +47,40 @@ interface ActiveGesture {
 }
 
 export default function VisualMediaLayoutBlock(props: any) {
-  const { formData, nodeKey } = props
-  const { dispatchFields } = useForm()
+  const { formData, nodeKey: propNodeKey } = props
+
+  let blockContext: any = null
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    blockContext = useBlockComponentContext()
+  } catch {
+    // Rendered outside BlockComponentContext
+  }
+
+  let documentForm: any = null
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    documentForm = useDocumentForm()
+  } catch {
+    // Rendered outside DocumentFormContext
+  }
+
+  let blockForm: any = null
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    blockForm = useForm()
+  } catch {
+    // Rendered outside FormContext
+  }
+  const dispatchFields = blockForm?.dispatchFields
+
+  const effectiveNodeKey = propNodeKey || blockContext?.nodeKey
+
   const layoutDataFromForm = useFormFields(([fields]) => fields?.layoutData?.value) as VisualGridData | undefined
   const captionFromForm = useFormFields(([fields]) => fields?.caption?.value) as string | undefined
 
-  const activeLayoutData = layoutDataFromForm ?? formData?.layoutData
-  const activeCaption = captionFromForm ?? formData?.caption ?? ''
+  const activeLayoutData = layoutDataFromForm ?? formData?.layoutData ?? blockContext?.initialState?.layoutData?.value
+  const activeCaption = captionFromForm ?? formData?.caption ?? blockContext?.initialState?.caption?.value ?? ''
 
   let editor: any = null
   try {
@@ -96,7 +124,7 @@ export default function VisualMediaLayoutBlock(props: any) {
   // Sync when activeLayoutData updates externally, UNLESS a gesture is currently in progress
   useEffect(() => {
     if (activeGestureRef.current) return
-    if (activeLayoutData) {
+    if (activeLayoutData && activeLayoutData.cells && activeLayoutData.cells.length > 0) {
       const migrated = migrateFromLegacyRows(activeLayoutData, activeCaption)
       setGrid(ensureDesignCoordinates(migrated))
     }
@@ -131,10 +159,15 @@ export default function VisualMediaLayoutBlock(props: any) {
         }
       }
 
-      // 2. Also update Lexical node directly if nodeKey is available
-      if (editor && nodeKey) {
+      // 2. Mark parent document form modified
+      if (documentForm?.setModified) {
+        documentForm.setModified(true)
+      }
+
+      // 3. Update Lexical node directly if effectiveNodeKey is available
+      if (editor && effectiveNodeKey) {
         editor.update(() => {
-          const node = $getNodeByKey(nodeKey)
+          const node = $getNodeByKey(effectiveNodeKey)
           if (node && typeof (node as any).setFields === 'function') {
             const current = (node as any).getFields() || {}
             ;(node as any).setFields(
@@ -144,13 +177,13 @@ export default function VisualMediaLayoutBlock(props: any) {
                 mediaItems: mediaIds,
                 caption: newGrid.caption ?? current.caption ?? '',
               },
-              true,
+              false,
             )
           }
         })
       }
     },
-    [dispatchFields, editor, nodeKey],
+    [dispatchFields, documentForm, editor, effectiveNodeKey],
   )
 
   // --------------------------------------------------------------------------
@@ -565,11 +598,10 @@ export default function VisualMediaLayoutBlock(props: any) {
           width: '100%',
           aspectRatio: `${canvasWidth} / ${totalHeight}`,
           boxSizing: 'border-box',
-          minHeight: '200px',
           margin: 0,
           padding: 0,
           background: 'transparent',
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         {displayGrid.cells.map((cell) => {
@@ -633,7 +665,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                   justifyContent: 'center',
                   margin: 0,
                   padding: 0,
-                  background: 'transparent',
+                  background: isSelected ? 'var(--muted, rgba(0, 0, 0, 0.05))' : 'transparent',
                   borderRadius,
                   overflow: 'hidden',
                   pointerEvents: 'none',
@@ -654,7 +686,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                 />
               </div>
 
-              {/* Discreet Action Icons on Hover/Selection (Replace & Delete) */}
+              {/* Discreet Action Icons on Hover/Selection (Fit Policy, Replace & Delete) */}
               {(isSelected || isHovered) && !activeGestureRef.current && (
                 <div
                   onPointerDown={(e) => e.stopPropagation()}
@@ -663,6 +695,7 @@ export default function VisualMediaLayoutBlock(props: any) {
                     top: '8px',
                     right: '8px',
                     display: 'flex',
+                    alignItems: 'center',
                     gap: '4px',
                     zIndex: 40,
                     background: 'var(--popover)',
@@ -674,6 +707,31 @@ export default function VisualMediaLayoutBlock(props: any) {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                   }}
                 >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const currentFit = cell.objectFit ?? (cell.aspectRatio === 'auto' ? 'contain' : 'cover')
+                      const nextFit: 'contain' | 'cover' = currentFit === 'contain' ? 'cover' : 'contain'
+                      const updatedCells = grid.cells.map((c) =>
+                        c.id === cell.id ? { ...c, objectFit: nextFit } : c,
+                      )
+                      persistGrid({ ...grid, cells: updatedCells })
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--foreground)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '2px 5px',
+                      borderRadius: 'var(--radius-sm, 4px)',
+                    }}
+                    title={(cell.objectFit ?? (cell.aspectRatio === 'auto' ? 'contain' : 'cover')) === 'contain' ? 'Switch to Cover (fill frame without stretching)' : 'Switch to Contain (letterbox, show full photo)'}
+                  >
+                    {(cell.objectFit ?? (cell.aspectRatio === 'auto' ? 'contain' : 'cover')) === 'contain' ? '⛶ Fill' : '⊡ Fit'}
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => {

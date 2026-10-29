@@ -123,6 +123,54 @@ describe('gridLayoutEngine - Multi-Image Insertion', () => {
     const coordKeys = result.cells.map((c) => `${c.colStart},${c.rowStart}`)
     expect(new Set(coordKeys).size).toBe(5)
   })
+
+  it('regression: widen A to 500 design units, then insert another image. No rectangles may overlap', () => {
+    // Initial cell A widened to 500 design units
+    const cellA: GridCell = {
+      id: 'A',
+      mediaId: 'A',
+      url: '/a.jpg',
+      filename: 'a.jpg',
+      colStart: 1,
+      colSpan: 1,
+      rowStart: 1,
+      rowSpan: 1,
+      x: 0,
+      y: 0,
+      width: 500,
+      height: 280,
+    }
+
+    const grid: VisualGridData = {
+      cells: [cellA],
+      columns: 3,
+      columnTracks: [33.3, 33.3, 33.4],
+      rows: 1,
+      canvasWidth: CANVAS_WIDTH,
+      totalHeight: 280,
+    }
+
+    const docB = { id: 'B', url: '/b.jpg', filename: 'b.jpg' }
+    const result = insertMediaDocs(grid, [docB])
+
+    expect(result.cells).toHaveLength(2)
+    const resultingA = result.cells.find((c) => c.id === 'A')!
+    const resultingB = result.cells.find((c) => c.mediaId === 'B')!
+
+    // Invariant: cell A's dimensions and positions are 100% preserved
+    expect(resultingA.x).toBe(0)
+    expect(resultingA.y).toBe(0)
+    expect(resultingA.width).toBe(500)
+    expect(resultingA.height).toBe(280)
+
+    // Invariant: No rectangles may overlap
+    const overlaps = doBoxesOverlap(
+      resultingA as { x: number; y: number; width: number; height: number },
+      resultingB as { x: number; y: number; width: number; height: number },
+      1,
+    )
+    expect(overlaps).toBe(false)
+  })
 })
 
 describe('gridLayoutEngine - Core Resize & Reflow Invariants', () => {
