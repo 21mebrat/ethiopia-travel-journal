@@ -3,14 +3,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getNodeByKey } from 'lexical'
-import { useForm, useFormFields, useDocumentForm } from '@payloadcms/ui'
-import { useBlockComponentContext } from '@payloadcms/richtext-lexical/client'
+import { useFormFields, useDocumentForm } from '@payloadcms/ui'
+import { useBlockComponentContext, $isBlockNode } from '@payloadcms/richtext-lexical/client'
 import { InlineMediaSelector, type MediaDoc } from './InlineMediaSelector'
 import {
   type GridCell,
   type VisualGridData,
   insertMediaDocs,
-  migrateFromLegacyRows,
+  createEmptyGrid,
+  hydrateVisualLayout,
   ensureDesignCoordinates,
   reflowAroundPinnedBox,
   CANVAS_WIDTH,
@@ -65,22 +66,30 @@ export default function VisualMediaLayoutBlock(props: any) {
     // Rendered outside DocumentFormContext
   }
 
-  let blockForm: any = null
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    blockForm = useForm()
-  } catch {
-    // Rendered outside FormContext
-  }
-  const dispatchFields = blockForm?.dispatchFields
-
   const effectiveNodeKey = propNodeKey || blockContext?.nodeKey
 
   const layoutDataFromForm = useFormFields(([fields]) => fields?.layoutData?.value) as VisualGridData | undefined
   const captionFromForm = useFormFields(([fields]) => fields?.caption?.value) as string | undefined
+  const imagesFromForm = useFormFields(([fields]) => fields?.images?.value) as any[] | undefined
+  const mediaItemsFromForm = useFormFields(([fields]) => fields?.mediaItems?.value) as any[] | undefined
 
-  const activeLayoutData = layoutDataFromForm ?? formData?.layoutData ?? blockContext?.initialState?.layoutData?.value
-  const activeCaption = captionFromForm ?? formData?.caption ?? blockContext?.initialState?.caption?.value ?? ''
+  // The Lexical node fields are the serialized source of truth. Reading them first
+  // means undo/redo and external node updates are reflected immediately; the block
+  // form is kept as a fallback mirror for rendering the hidden fields.
+  const activeLayoutData =
+    formData?.layoutData ?? layoutDataFromForm ?? blockContext?.initialState?.layoutData?.value
+  const activeCaption =
+    formData?.caption ?? captionFromForm ?? blockContext?.initialState?.caption?.value ?? ''
+  const activeImages = formData?.images ?? imagesFromForm ?? blockContext?.initialState?.images?.value
+  const activeMediaItems =
+    formData?.mediaItems ?? mediaItemsFromForm ?? blockContext?.initialState?.mediaItems?.value
+
+  const hydration = hydrateVisualLayout({
+    layoutData: activeLayoutData,
+    images: activeImages,
+    mediaItems: activeMediaItems,
+    caption: activeCaption,
+  })
 
   let editor: any = null
   try {
@@ -91,10 +100,9 @@ export default function VisualMediaLayoutBlock(props: any) {
     // In case rendered outside LexicalComposerContext
   }
 
-  // Committed authoritative grid
-  const [grid, setGrid] = useState<VisualGridData>(() =>
-    ensureDesignCoordinates(migrateFromLegacyRows(activeLayoutData, activeCaption)),
-  )
+  // Committed authoritative grid. Hydration is shared with the public renderer so
+  // legacy `images` blocks open with the exact same cells the reader sees.
+  const [grid, setGrid] = useState<VisualGridData>(() => hydration.grid)
 
   // Transient preview grid during mouse/pointer gesture
   const [previewGrid, setPreviewGrid] = useState<VisualGridData | null>(null)
@@ -121,16 +129,124 @@ export default function VisualMediaLayoutBlock(props: any) {
   // Display grid is previewGrid during active gesture, else authoritative grid
   const displayGrid = previewGrid || grid
 
-  // Sync when activeLayoutData updates externally, UNLESS a gesture is currently in progress
-  useEffect(() => {
+  // The `formData` prop on a custom block component is captured when the block
+  // element is first rendered, so it does NOT refresh when the Lexical node is
+  // mutated (media insert, resize, undo/redo). The node is the live source of
+  // truth, so subscribe to editor updates and re-read its fields. This is what
+  // makes the editor follow Undo/Redo and any external node mutation.
+  const applyNodeFields = useCallback((fields: any) => {
     if (activeGestureRef.current) return
-    if (activeLayoutData && activeLayoutData.cells && activeLayoutData.cells.length > 0) {
-      const migrated = migrateFromLegacyRows(activeLayoutData, activeCaption)
-      setGrid(ensureDesignCoordinates(migrated))
-    }
-  }, [activeLayoutData, activeCaption])
 
-  // Persist to Payload Block Form and Lexical node
+    const incoming = hydrateVisualLayout({
+      layoutData: fields?.layoutData,
+      images: fields?.images,
+      mediaItems: fields?.mediaItems,
+      caption: fields?.caption,
+    }).grid
+
+    setGrid((prev) => {
+      // Legacy `images` cells may have had their media docs resolved over the
+      // network locally; keep those URLs instead of dropping back to a bare ID
+      // on the next unrelated editor update.
+      const merged: VisualGridData = {
+        ...incoming,
+        cells: incoming.cells.map((cell) => {
+          if (cell.url) return cell
+          const previous = prev.cells.find(
+            (candidate) =>
+              candidate.id === cell.id ||
+              (candidate.mediaId && candidate.mediaId === cell.mediaId),
+          )
+          if (!previous?.url) return cell
+          return {
+            ...cell,
+            url: previous.url,
+            filename: cell.filename || previous.filename,
+            alt: cell.alt ?? previous.alt,
+            caption: cell.caption ?? previous.caption,
+          }
+        }),
+      }
+
+      return JSON.stringify(merged) === JSON.stringify(prev) ? prev : merged
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!editor || !effectiveNodeKey) return
+
+    const syncFromNode = () => {
+      const fields = editor.getEditorState().read(() => {
+        const node = $getNodeByKey(effectiveNodeKey)
+        return $isBlockNode(node) ? node.getFields() : null
+      })
+      if (fields) applyNodeFields(fields)
+    }
+
+    syncFromNode()
+    return editor.registerUpdateListener(syncFromNode)
+  }, [editor, effectiveNodeKey, applyNodeFields])
+
+  // Legacy `images` entries may only contain relationship IDs in the admin form.
+  // Resolve the missing media documents so legacy blocks render in the editor too.
+  const missingLegacyMediaIds = grid.cells
+    .filter((cell) => !cell.url && cell.mediaId)
+    .map((cell) => cell.mediaId)
+  const missingLegacyMediaKey = missingLegacyMediaIds.join(',')
+
+  useEffect(() => {
+    if (!missingLegacyMediaKey) return
+    const ids = missingLegacyMediaKey.split(',')
+    let cancelled = false
+
+    const resolve = async () => {
+      try {
+        const results = await Promise.all(
+          ids.map(async (id) => {
+            const res = await fetch(`/api/media/${encodeURIComponent(id)}?depth=0`)
+            if (!res.ok) return null
+            return (await res.json()) as MediaDoc
+          }),
+        )
+        if (cancelled) return
+        const byId = new Map(results.filter(Boolean).map((doc) => [String(doc!.id), doc!]))
+
+        setGrid((prev) => ({
+          ...prev,
+          cells: prev.cells.map((cell) => {
+            if (cell.url) return cell
+            const doc = byId.get(String(cell.mediaId))
+            if (!doc?.url) return cell
+            return {
+              ...cell,
+              url: doc.url,
+              filename: cell.filename || doc.filename,
+              alt: cell.alt ?? doc.alt,
+              caption: cell.caption ?? doc.caption,
+            }
+          }),
+        }))
+      } catch {
+        // Leave the cells in place; they will resolve on the next mount.
+      }
+    }
+
+    void resolve()
+    return () => {
+      cancelled = true
+    }
+  }, [missingLegacyMediaKey])
+
+  // Persist the layout to the Lexical node (the serialized source of truth).
+  //
+  // Deliberately NOT mirrored with `dispatchFields` on the block form: the
+  // block form's `onChange` round-trips every dispatched value through
+  // `getFormState` and re-applies it to the node inside a deferred
+  // `editor.update()`. That produces a redundant, duplicate history entry, so a
+  // single browser Undo only reverts the re-application and the layout appears
+  // unchanged. It can also overwrite a legitimate Undo with stale state.
+  // Every field in this block is `admin.hidden`, and the node is what the
+  // Lexical rich-text field serializes on save, so the form mirror is unused.
   const persistGrid = useCallback(
     (newGrid: VisualGridData) => {
       setGrid(newGrid)
@@ -138,52 +254,33 @@ export default function VisualMediaLayoutBlock(props: any) {
 
       const mediaIds = extractMediaIds(newGrid)
 
-      // 1. Dispatch to Payload Block Form
-      if (dispatchFields) {
-        dispatchFields({
-          type: 'UPDATE',
-          path: 'layoutData',
-          value: newGrid,
-        })
-        dispatchFields({
-          type: 'UPDATE',
-          path: 'mediaItems',
-          value: mediaIds,
-        })
-        if (newGrid.caption !== undefined) {
-          dispatchFields({
-            type: 'UPDATE',
-            path: 'caption',
-            value: newGrid.caption,
-          })
-        }
-      }
-
-      // 2. Mark parent document form modified
+      // 1. Mark parent document form modified so Save/Publish are enabled.
       if (documentForm?.setModified) {
         documentForm.setModified(true)
       }
 
-      // 3. Update Lexical node directly if effectiveNodeKey is available
+      // 2. Update the Lexical node directly. `setFields(..., true)` prevents
+      // the block form's cache-buster from resetting on every pointer gesture;
+      // the node itself is still the source of truth that gets serialized on save.
       if (editor && effectiveNodeKey) {
         editor.update(() => {
           const node = $getNodeByKey(effectiveNodeKey)
-          if (node && typeof (node as any).setFields === 'function') {
-            const current = (node as any).getFields() || {}
-            ;(node as any).setFields(
+          if ($isBlockNode(node)) {
+            const current = node.getFields()
+            node.setFields(
               {
                 ...current,
                 layoutData: newGrid,
                 mediaItems: mediaIds,
                 caption: newGrid.caption ?? current.caption ?? '',
               },
-              false,
+              true,
             )
           }
         })
       }
     },
-    [dispatchFields, documentForm, editor, effectiveNodeKey],
+    [documentForm, editor, effectiveNodeKey],
   )
 
   // --------------------------------------------------------------------------
@@ -223,16 +320,7 @@ export default function VisualMediaLayoutBlock(props: any) {
   const removeCell = (cellId: string) => {
     const remaining = grid.cells.filter((c) => c.id !== cellId)
     if (remaining.length === 0) {
-      persistGrid({
-        version: 2,
-        cells: [],
-        columns: 1,
-        columnTracks: [100],
-        rows: 1,
-        caption: '',
-        canvasWidth: CANVAS_WIDTH,
-        totalHeight: DEFAULT_ROW_HEIGHT,
-      })
+      persistGrid(createEmptyGrid())
       setSelectedCellId(null)
       return
     }

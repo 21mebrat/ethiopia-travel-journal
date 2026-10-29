@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import {
-  migrateFromLegacyRows,
-  ensureDesignCoordinates,
+  hydrateVisualLayout,
   CANVAS_WIDTH,
   DEFAULT_ROW_HEIGHT,
   type GridCell,
@@ -199,60 +198,15 @@ function Lightbox({
 export function VisualMediaLayoutRenderer(props: VisualMediaLayoutRendererProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
-  let normalizedGrid = migrateFromLegacyRows(props.layoutData, props.caption ?? '')
-  let cells: GridCellRenderer[] = normalizedGrid.cells
-
-  // Fallback from legacy images array if present
-  if (cells.length === 0 && props.images && props.images.length > 0) {
-    const entries = props.images
-      .map((entry: any) => {
-        let doc = entry.image && typeof entry.image === 'object' ? entry.image : null
-        if (!doc && entry.image && typeof entry.image === 'string') {
-          const found = (props.mediaItems || []).find(
-            (m: any) => (typeof m === 'object' ? m.id === entry.image : m === entry.image)
-          )
-          if (found && typeof found === 'object' && found.url) {
-            doc = found
-          } else {
-            doc = { id: entry.image, url: entry.url || `/media/${entry.image}` }
-          }
-        } else if (!doc && entry.url) {
-          doc = { id: entry.id || 'legacy', url: entry.url }
-        }
-        return { entry, doc }
-      })
-      .filter(({ doc }) => Boolean(doc?.url))
-
-    const columns = Math.max(1, Math.min(2, entries.length))
-
-    cells = entries.map(({ entry, doc }, index): GridCellRenderer => ({
-      id: `legacy-${index}`,
-      mediaId: doc.id || `legacy-${index}`,
-      url: doc.url,
-      filename: doc.filename || `legacy-${index}.jpg`,
-      alt: entry.altText ?? doc.alt,
-      caption: entry.caption ?? doc.caption,
-      colStart: (index % columns) + 1,
-      colSpan: 1,
-      rowStart: Math.floor(index / columns) + 1,
-      rowSpan: 1,
-      aspectRatio: 'auto',
-      shape: 'rounded',
-    }))
-
-    normalizedGrid = {
-      ...normalizedGrid,
-      cells,
-      columns,
-      columnTracks: Array(columns).fill(100 / columns),
-      rows: Math.max(1, Math.ceil(cells.length / columns)),
-    }
-  }
-
-  // Normalize completed layout before rendering so that legacy fallback images
-  // receive distinct, non-overlapping continuous 2D design coordinates (x, y, width, height)
-  normalizedGrid = ensureDesignCoordinates(normalizedGrid)
-  cells = normalizedGrid.cells
+  // Shared with the editor: an explicit (even empty) layout always wins over the
+  // legacy `images` array, so deleted legacy images cannot be resurrected.
+  const normalizedGrid = hydrateVisualLayout({
+    layoutData: props.layoutData,
+    images: props.images,
+    mediaItems: props.mediaItems,
+    caption: props.caption ?? '',
+  }).grid
+  const cells: GridCellRenderer[] = normalizedGrid.cells
 
   if (cells.length === 0) return null
 

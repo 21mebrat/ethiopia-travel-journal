@@ -73,6 +73,7 @@ export interface Config {
     destinations: Destination;
     articles: Article;
     comments: Comment;
+    title: Title;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +87,7 @@ export interface Config {
     destinations: DestinationsSelect<false> | DestinationsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     comments: CommentsSelect<false> | CommentsSelect<true>;
+    title: TitleSelect<false> | TitleSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -440,6 +442,45 @@ export interface Comment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "title".
+ */
+export interface Title {
+  id: string;
+  /**
+   * Title of the advertisement
+   */
+  title: string;
+  /**
+   * Content of the advertisement
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * URL friendly version of the title
+   */
+  slug: string;
+  /**
+   * Media of the advertisement
+   */
+  heroImage?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -485,6 +526,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'comments';
         value: string | Comment;
+      } | null)
+    | ({
+        relationTo: 'title';
+        value: string | Title;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -665,6 +710,18 @@ export interface CommentsSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   body?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "title_select".
+ */
+export interface TitleSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  slug?: T;
+  heroImage?: T;
   updatedAt?: T;
   createdAt?: T;
 }

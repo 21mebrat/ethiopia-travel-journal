@@ -1108,3 +1108,184 @@ export function migrateFromLegacyRows(legacyData: any, defaultCaption = ''): Vis
     totalHeight: DEFAULT_ROW_HEIGHT,
   }
 }
+
+/**
+ * Creates a canonical, intentionally-empty modern grid.
+ */
+export function createEmptyGrid(caption = ''): VisualGridData {
+  return {
+    version: 2,
+    cells: [],
+    columns: 1,
+    columnTracks: [100],
+    rows: 1,
+    caption,
+    canvasWidth: CANVAS_WIDTH,
+    totalHeight: DEFAULT_ROW_HEIGHT,
+  }
+}
+
+export type VisualLayoutSource = 'modern' | 'legacy-layout' | 'legacy-images' | 'empty'
+
+export type HydratedVisualLayout = {
+  grid: VisualGridData
+  source: VisualLayoutSource
+  /**
+   * True when the block contains an explicit layout (`layoutData`). An authoritative
+   * layout - even an empty one - must always win over the legacy `images` array.
+   * This is what prevents deleted legacy images from being resurrected.
+   */
+  hasAuthoritativeLayout: boolean
+}
+
+type LegacyMediaLike = {
+  id?: string
+  url?: string
+  filename?: string
+  alt?: string
+  caption?: string
+}
+
+type ResolvedLegacyMedia = LegacyMediaLike & { id: string; url: string }
+
+function findMediaDoc(reference: unknown, mediaItems: unknown[] = []): LegacyMediaLike | null {
+  if (!reference) return null
+  if (typeof reference === 'object') {
+    return reference as LegacyMediaLike
+  }
+  const match = mediaItems.find((item) => {
+    if (typeof item === 'object' && item !== null) {
+      return (item as LegacyMediaLike).id === reference
+    }
+    return item === reference
+  })
+  return match && typeof match === 'object' ? (match as LegacyMediaLike) : null
+}
+
+/**
+ * Resolves a single legacy `images` array entry into a media descriptor.
+ * Supports populated upload docs, bare relationship IDs and raw URL entries.
+ */
+export function resolveLegacyImageDoc(
+  entry: any,
+  mediaItems: unknown[] = [],
+): ResolvedLegacyMedia | null {
+  if (!entry) return null
+
+  let doc = findMediaDoc(entry.image, mediaItems)
+  if (!doc && entry.image && typeof entry.image !== 'object') {
+    doc = { id: String(entry.image) }
+  }
+  if (!doc && entry.url) {
+    doc = { id: entry.id || entry.url, url: entry.url }
+  }
+  if (!doc) return null
+
+  const id = doc.id || (entry.id ? String(entry.id) : undefined)
+  const url = doc.url || entry.url
+  if (!id && !url) return null
+
+  return {
+    id: id || String(url),
+    url: url || '',
+    filename: doc.filename || entry.filename,
+    alt: entry.altText ?? doc.alt,
+    caption: entry.caption ?? doc.caption,
+  }
+}
+
+/**
+ * Builds modern grid cells from the legacy `images` array.
+ * Cells without a resolvable URL are still returned (the editor fills them in later).
+ */
+export function buildLegacyImageCells(
+  images: any[] | undefined,
+  mediaItems: unknown[] = [],
+): GridCell[] {
+  if (!Array.isArray(images) || images.length === 0) return []
+
+  const columns = Math.max(1, Math.min(2, images.length))
+  const cells: GridCell[] = []
+
+  images.forEach((entry, index) => {
+    const doc = resolveLegacyImageDoc(entry, mediaItems)
+    if (!doc) return
+    cells.push({
+      id: `legacy-${index}`,
+      mediaId: doc.id,
+      url: doc.url,
+      filename: doc.filename || `legacy-${index}.jpg`,
+      alt: doc.alt,
+      caption: doc.caption,
+      colStart: (index % columns) + 1,
+      colSpan: 1,
+      rowStart: Math.floor(index / columns) + 1,
+      rowSpan: 1,
+      aspectRatio: 'auto',
+      shape: 'rounded',
+    })
+  })
+
+  return cells
+}
+
+/**
+ * Single source of truth for interpreting stored visual media layout data.
+ *
+ * Precedence:
+ * 1. `layoutData.cells` (modern) - authoritative even when empty.
+ * 2. `layoutData.rows` (legacy layout) - authoritative.
+ * 3. Legacy `images` array - only when no explicit layout exists.
+ * 4. Empty grid.
+ */
+export function hydrateVisualLayout(input: {
+  layoutData?: any
+  images?: any[]
+  mediaItems?: unknown[]
+  caption?: string
+}): HydratedVisualLayout {
+  const { layoutData, images, mediaItems, caption = '' } = input
+
+  const hasCells = Boolean(layoutData) && Array.isArray(layoutData?.cells)
+  const hasRows = Boolean(layoutData) && Array.isArray(layoutData?.rows)
+
+  if (hasCells || hasRows) {
+    const migrated = migrateFromLegacyRows(layoutData, caption)
+    const grid = ensureDesignCoordinates({
+      ...migrated,
+      caption: layoutData?.caption ?? caption,
+    })
+
+    return {
+      grid,
+      source: hasRows ? 'legacy-layout' : grid.cells.length > 0 ? 'modern' : 'empty',
+      hasAuthoritativeLayout: true,
+    }
+  }
+
+  const legacyCells = buildLegacyImageCells(images, mediaItems)
+  if (legacyCells.length > 0) {
+    const columns = Math.max(1, Math.min(2, images?.length ?? legacyCells.length))
+    const grid = ensureDesignCoordinates({
+      version: 2,
+      cells: legacyCells,
+      columns,
+      columnTracks: Array(columns).fill(100 / columns),
+      rows: Math.max(1, Math.ceil(legacyCells.length / columns)),
+      caption,
+      canvasWidth: CANVAS_WIDTH,
+    })
+
+    return {
+      grid,
+      source: 'legacy-images',
+      hasAuthoritativeLayout: false,
+    }
+  }
+
+  return {
+    grid: createEmptyGrid(caption),
+    source: 'empty',
+    hasAuthoritativeLayout: false,
+  }
+}

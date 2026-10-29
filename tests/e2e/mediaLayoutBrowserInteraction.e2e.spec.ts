@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '../../src/payload.config.js'
 import { login } from '../helpers/login'
 import { seedTestUser, cleanupTestUser, testUser } from '../helpers/seedUser'
+import { openArticleEditor } from '../helpers/editor'
 import { CANVAS_WIDTH, DEFAULT_ROW_HEIGHT, DEFAULT_GAP } from '../../src/components/lexical/gridLayoutEngine'
 
 const TEST_ARTICLE_SLUG = 'e2e-visual-media-test'
@@ -173,6 +174,10 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
     await cleanupTestUser()
   })
 
+  test.beforeEach(async () => {
+    test.setTimeout(150000)
+  })
+
   test('Public page: renders contained stage with geometry parity and lightbox', async () => {
     await page.goto(`http://localhost:3000/articles/${TEST_ARTICLE_SLUG}`)
     await page.waitForLoadState('networkidle')
@@ -212,8 +217,7 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
   })
 
   test('Admin editor: select image reveals 8 resize handles', async () => {
-    await page.goto(`http://localhost:3000/admin/collections/articles/${articleId}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, articleId)
 
     // Find the canvas stage inside the Lexical editor
     const stage = page.locator('.vml-canvas-stage')
@@ -237,8 +241,7 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
   })
 
   test('Action 1 & 4: Expand D across the second row preserves D height and neighbors', async () => {
-    await page.goto(`http://localhost:3000/admin/collections/articles/${articleId}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, articleId)
 
     const stage = page.locator('.vml-canvas-stage')
     await expect(stage).toBeVisible()
@@ -289,8 +292,7 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
   })
 
   test('Action 2: Expand A across two columns repositions B rather than resizing B', async () => {
-    await page.goto(`http://localhost:3000/admin/collections/articles/${articleId}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, articleId)
 
     const stage = page.locator('.vml-canvas-stage')
     const cells = stage.locator('.vml-image-cell')
@@ -324,14 +326,17 @@ test.describe('Visual Media Layout - Browser Interaction Tests', () => {
   })
 
   test('Action 3: Drag C into empty blank space on row 2 without colliding', async () => {
-    await page.goto(`http://localhost:3000/admin/collections/articles/${articleId}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, articleId)
 
     const stage = page.locator('.vml-canvas-stage')
     const cells = stage.locator('.vml-image-cell')
 
-    // Cell C is 3rd cell (row 1, col 3)
-    const initialBoxC = (await cells.nth(2).boundingBox())!
+    // Cell C is 3rd cell (row 1, col 3). The block sits below the article
+    // fields, so it can be outside the 1280x720 viewport; center it before
+    // dispatching mouse events or the pointerdown never reaches the cell.
+    const cellC = cells.nth(2)
+    await cellC.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+    const initialBoxC = (await cellC.boundingBox())!
     const initialBoxA = (await cells.nth(0).boundingBox())!
 
     // Click and drag cell C downwards into the empty area beside D

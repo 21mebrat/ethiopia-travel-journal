@@ -19,6 +19,9 @@ import {
   reflowAroundPinnedCell,
   reflowAroundPinnedBox,
   ensureDesignCoordinates,
+  hydrateVisualLayout,
+  buildLegacyImageCells,
+  createEmptyGrid,
   CANVAS_WIDTH,
   DEFAULT_ROW_HEIGHT,
   DEFAULT_GAP,
@@ -482,5 +485,104 @@ describe('gridLayoutEngine - Required Regression Checks', () => {
         expect(doCellsOverlap(result.cells[i], result.cells[j])).toBe(false)
       }
     }
+  })
+})
+
+describe('gridLayoutEngine - shared legacy hydration', () => {
+  const modernGrid = {
+    version: 2,
+    cells: [makeCell('A', 1, 1)],
+    columns: 1,
+    columnTracks: [100],
+    rows: 1,
+    caption: 'Modern',
+  }
+
+  it('treats a modern layout as authoritative', () => {
+    const result = hydrateVisualLayout({ layoutData: modernGrid, images: [{ image: 'legacy-1' }] })
+    expect(result.hasAuthoritativeLayout).toBe(true)
+    expect(result.source).toBe('modern')
+    expect(result.grid.cells).toHaveLength(1)
+    expect(result.grid.cells[0].id).toBe('A')
+  })
+
+  it('treats an intentionally empty modern layout as authoritative and ignores legacy images', () => {
+    const result = hydrateVisualLayout({
+      layoutData: createEmptyGrid('Empty'),
+      images: [
+        { image: { id: 'm1', url: '/m1.jpg' } },
+        { image: { id: 'm2', url: '/m2.jpg' } },
+      ],
+    })
+
+    expect(result.hasAuthoritativeLayout).toBe(true)
+    expect(result.source).toBe('empty')
+    expect(result.grid.cells).toHaveLength(0)
+    expect(result.grid.caption).toBe('Empty')
+  })
+
+  it('falls back to legacy images only when no layout exists', () => {
+    const result = hydrateVisualLayout({
+      layoutData: undefined,
+      images: [
+        { image: { id: 'm1', url: '/m1.jpg', filename: 'm1.jpg' }, altText: 'One' },
+        { image: { id: 'm2', url: '/m2.jpg', filename: 'm2.jpg' }, altText: 'Two' },
+      ],
+    })
+
+    expect(result.hasAuthoritativeLayout).toBe(false)
+    expect(result.source).toBe('legacy-images')
+    expect(result.grid.cells).toHaveLength(2)
+    expect(result.grid.cells.map((c) => c.mediaId)).toEqual(['m1', 'm2'])
+    expect(result.grid.cells.map((c) => c.alt)).toEqual(['One', 'Two'])
+    expect(result.grid.cells[0].x).toBe(0)
+    expect(result.grid.cells[1].x).toBeGreaterThan(result.grid.cells[0].x!)
+    expect(doBoxesOverlap(result.grid.cells[0] as any, result.grid.cells[1] as any)).toBe(false)
+  })
+
+  it('resolves legacy relationship IDs through mediaItems', () => {
+    const result = hydrateVisualLayout({
+      images: [{ image: 'id-1' }, { image: 'id-2' }],
+      mediaItems: [
+        { id: 'id-1', url: '/one.jpg', filename: 'one.jpg' },
+        { id: 'id-2', url: '/two.jpg', filename: 'two.jpg' },
+      ],
+    })
+
+    expect(result.grid.cells).toHaveLength(2)
+    expect(result.grid.cells.map((c) => c.url)).toEqual(['/one.jpg', '/two.jpg'])
+  })
+
+  it('keeps ID-only legacy entries so the editor can resolve them later', () => {
+    const cells = buildLegacyImageCells([{ image: 'id-only' }], [])
+    expect(cells).toHaveLength(1)
+    expect(cells[0]).toMatchObject({ mediaId: 'id-only', url: '' })
+  })
+
+  it('supports legacy rows layouts as authoritative', () => {
+    const result = hydrateVisualLayout({
+      layoutData: {
+        rows: [
+          {
+            columns: [
+              { items: [{ id: 'r1', mediaId: 'm1', url: '/r1.jpg', filename: 'r1.jpg' }] },
+              { items: [{ id: 'r2', mediaId: 'm2', url: '/r2.jpg', filename: 'r2.jpg' }] },
+            ],
+          },
+        ],
+      },
+      images: [{ image: { id: 'legacy', url: '/legacy.jpg' } }],
+    })
+
+    expect(result.hasAuthoritativeLayout).toBe(true)
+    expect(result.source).toBe('legacy-layout')
+    expect(result.grid.cells.map((c) => c.id)).toEqual(['r1', 'r2'])
+  })
+
+  it('returns an empty grid when there is no layout and no legacy images', () => {
+    const result = hydrateVisualLayout({ caption: 'Nothing' })
+    expect(result.source).toBe('empty')
+    expect(result.hasAuthoritativeLayout).toBe(false)
+    expect(result.grid).toMatchObject({ cells: [], caption: 'Nothing' })
   })
 })

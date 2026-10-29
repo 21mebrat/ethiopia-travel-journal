@@ -3,9 +3,48 @@ import { getPayload } from 'payload'
 import config from '../../src/payload.config.js'
 import { login } from '../helpers/login'
 import { seedTestUser, cleanupTestUser, testUser } from '../helpers/seedUser'
+import {
+  openArticleEditor,
+  waitForArticleSave,
+  expectImagesLoaded,
+  insertVisualMediaLayoutBlock,
+  chooseMediaInLayout,
+  deleteAllLayoutCells,
+  waitForEditorFieldSync,
+} from '../helpers/editor'
 import { CANVAS_WIDTH, DEFAULT_ROW_HEIGHT, DEFAULT_GAP, doBoxesOverlap } from '../../src/components/lexical/gridLayoutEngine'
 
 const TEST_ARTICLE_BASE = 'e2e-vml-complete'
+
+function textParagraph(text: string) {
+  return {
+    type: 'paragraph',
+    format: '',
+    indent: 0,
+    version: 1,
+    direction: 'ltr' as const,
+    textFormat: 0,
+    textStyle: '',
+    children: [
+      {
+        type: 'text',
+        detail: 0,
+        format: 0,
+        mode: 'normal',
+        style: '',
+        text,
+        version: 1,
+      },
+    ],
+  }
+}
+
+function getVisualBlocks(doc: any): any[] {
+  const children = doc?.content?.root?.children ?? []
+  return children.filter(
+    (node: any) => node?.type === 'block' && node?.fields?.blockType === 'visualMediaLayout',
+  )
+}
 
 test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
   let authorId: string
@@ -27,7 +66,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
   })
 
   test.beforeEach(async () => {
-    test.setTimeout(90000)
+    test.setTimeout(180000)
   })
 
   test.afterAll(async () => {
@@ -125,8 +164,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
 
     // Check Editor with 600px wide stage
     await login({ page, user: testUser })
-    await page.goto(`http://localhost:3000/admin/collections/articles/${article.id}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, article.id)
 
     const editorStage = page.locator('.vml-canvas-stage')
     await expect(editorStage).toBeVisible()
@@ -335,8 +373,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     })
 
     await login({ page, user: testUser })
-    await page.goto(`http://localhost:3000/admin/collections/articles/${article.id}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, article.id)
 
     const stage = page.locator('.vml-canvas-stage')
     await expect(stage).toBeVisible()
@@ -476,8 +513,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     })
 
     await login({ page, user: testUser })
-    await page.goto(`http://localhost:3000/admin/collections/articles/${article.id}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, article.id)
 
     const stage = page.locator('.vml-canvas-stage')
     const cellA = stage.locator('.vml-image-cell').first()
@@ -500,10 +536,12 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
   })
 
   // --------------------------------------------------------------------------
-  // TEST 5: Complete Persistence Lifecycle (Save Draft -> Reload -> Publish -> Public Article)
+  // TEST 5: Complete Persistence Lifecycle (UI-inserted block, customize, save
+  // draft, reload, publish, public article)
   // --------------------------------------------------------------------------
-  test('5. Persistence Lifecycle: Save Draft, Refresh, Publish, and Public Page Geometry', async ({ page }) => {
-    const slug = `${TEST_ARTICLE_BASE}-persist-full`
+  test('5. UI-created block: insert, add media, customize, save draft, reload, publish, public render', async ({ page }) => {
+    test.setTimeout(300000)
+    const slug = `${TEST_ARTICLE_BASE}-ui-lifecycle`
     const payload = await getPayload({ config: await config })
 
     await payload.delete({ collection: 'articles', where: { slug: { equals: slug } } })
@@ -511,9 +549,357 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     const article = await payload.create({
       collection: 'articles',
       data: {
-        title: 'Full Lifecycle Article',
+        title: 'UI Lifecycle Article',
         slug,
-        excerpt: 'Full lifecycle test excerpt',
+        excerpt: 'UI-created layout lifecycle',
+        heroImage: mediaDocs[0].id,
+        author: authorId,
+        publishedDate: new Date().toISOString(),
+        _status: 'draft',
+        content: {
+          root: {
+            type: 'root',
+            format: '' as any,
+            indent: 0,
+            version: 1,
+            direction: 'ltr' as const,
+            children: [textParagraph('Intro paragraph')],
+          },
+        },
+      },
+    })
+
+    await login({ page, user: testUser })
+    await openArticleEditor(page, article.id)
+
+    // Create the block through the real editor toolbar (not seeded data).
+    await insertVisualMediaLayoutBlock(page)
+    await chooseMediaInLayout(
+      page,
+      page.locator('.vml-empty-canvas').last(),
+      mediaDocs.slice(0, 3).map((d) => d.id),
+    )
+
+    const stage = page.locator('.vml-canvas-stage').last()
+    await expect(stage).toBeVisible()
+    const cells = stage.locator('.vml-image-cell')
+    await expect(cells).toHaveCount(3)
+    await expect(page.locator('.vml-empty-canvas')).toHaveCount(0)
+
+    const expectedIds = mediaDocs.slice(0, 3).map((d) => d.id)
+    const expectedUrls = mediaDocs.slice(0, 3).map((d) => d.url)
+
+    const editorSrcs = await stage
+      .locator('.vml-image-cell img')
+      .evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src')))
+    expect(editorSrcs).toEqual(expectedUrls)
+
+    // Customize: switch the first image from contain to cover.
+    await cells.nth(0).click()
+    const switchToCover = cells.nth(0).locator('button[title^="Switch to Cover"]')
+    await expect(switchToCover).toBeVisible()
+    await switchToCover.click()
+    await expect(cells.nth(0).locator('button[title^="Switch to Contain"]')).toBeVisible()
+
+    // Customize: resize the first cell independently with the east handle.
+    const handleE = cells.nth(0).locator('div[title="Drag right edge to resize width"]')
+    await expect(handleE).toBeVisible()
+    const handleBox = (await handleE.boundingBox())!
+    const beforeResize = (await cells.nth(0).boundingBox())!
+    await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(handleBox.x - 80, handleBox.y + handleBox.height / 2, { steps: 8 })
+    await page.mouse.up()
+    await expect
+      .poll(async () => (await cells.nth(0).boundingBox())!.width)
+      .toBeLessThan(beforeResize.width - 10)
+
+    // Save Draft and verify the serialized Lexical document in the database.
+    const draftSave = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save-draft').click()
+    expect((await draftSave).status).toBeLessThan(400)
+    await page.waitForTimeout(1000)
+
+    const draft = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: true,
+      depth: 0,
+    })
+    const draftBlock = getVisualBlocks(draft)[0]
+    expect(draftBlock).toBeTruthy()
+    expect(draftBlock.fields.layoutData.cells).toHaveLength(3)
+    expect(draftBlock.fields.layoutData.cells.map((c: any) => c.mediaId)).toEqual(expectedIds)
+    expect(draftBlock.fields.mediaItems).toEqual(expectedIds)
+    expect(draftBlock.fields.layoutData.cells[0].objectFit).toBe('cover')
+
+    const savedWidth = draftBlock.fields.layoutData.cells[0].width
+    expect(savedWidth).toBeLessThan(CANVAS_WIDTH)
+    const savedGeometry = draftBlock.fields.layoutData.cells.map((c: any) => ({
+      mediaId: c.mediaId,
+      x: c.x,
+      y: c.y,
+      width: c.width,
+      height: c.height,
+    }))
+    const savedTotalHeight = draftBlock.fields.layoutData.totalHeight
+
+    // Reload from the server: IDs, geometry and fit must survive exactly.
+    await openArticleEditor(page, article.id)
+    const reloadedStage = page.locator('.vml-canvas-stage').last()
+    await expect(reloadedStage.locator('.vml-image-cell')).toHaveCount(3)
+    await expect(reloadedStage.locator('.vml-image-cell').nth(0).locator('img')).toHaveCSS(
+      'object-fit',
+      'cover',
+    )
+
+    const reloadedSrcs = await reloadedStage
+      .locator('.vml-image-cell img')
+      .evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src')))
+    expect(reloadedSrcs).toEqual(expectedUrls)
+
+    const reloadedStageBox = (await reloadedStage.boundingBox())!
+    for (let i = 0; i < savedGeometry.length; i += 1) {
+      const box = (await reloadedStage.locator('.vml-image-cell').nth(i).boundingBox())!
+      const geometry = savedGeometry[i]
+      expect(
+        Math.abs(box.x - reloadedStageBox.x - (geometry.x / CANVAS_WIDTH) * reloadedStageBox.width),
+      ).toBeLessThanOrEqual(3)
+      expect(
+        Math.abs(box.y - reloadedStageBox.y - (geometry.y / savedTotalHeight) * reloadedStageBox.height),
+      ).toBeLessThanOrEqual(3)
+      expect(
+        Math.abs(box.width - (geometry.width / CANVAS_WIDTH) * reloadedStageBox.width),
+      ).toBeLessThanOrEqual(3)
+      expect(
+        Math.abs(box.height - (geometry.height / savedTotalHeight) * reloadedStageBox.height),
+      ).toBeLessThanOrEqual(3)
+    }
+
+    // Publish from the reopened editor and verify the published document.
+    const publishRes = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save').click()
+    expect((await publishRes).status).toBeLessThan(400)
+    await page.waitForTimeout(1000)
+
+    const published = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: false,
+      depth: 0,
+    })
+    expect(published._status).toBe('published')
+    const publishedBlock = getVisualBlocks(published)[0]
+    expect(publishedBlock.fields.layoutData.cells).toHaveLength(3)
+    expect(publishedBlock.fields.layoutData.cells.map((c: any) => c.mediaId)).toEqual(expectedIds)
+    expect(publishedBlock.fields.mediaItems).toEqual(expectedIds)
+    expect(publishedBlock.fields.layoutData.cells[0].objectFit).toBe('cover')
+
+    // Public article: real markup, real decoded images, exact references.
+    await page.goto(`http://localhost:3000/articles/${slug}`)
+    await page.waitForLoadState('networkidle')
+
+    const publicStage = page.locator('.vml-public-stage').last()
+    await expect(publicStage).toBeVisible()
+    await publicStage.scrollIntoViewIfNeeded()
+    await expect(publicStage.locator('.vml-public-cell')).toHaveCount(3)
+    await expectImagesLoaded(publicStage)
+
+    const publicSrcs = await publicStage
+      .locator('.vml-public-cell img')
+      .evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src')))
+    expect(publicSrcs).toEqual(expectedUrls)
+  })
+
+  // --------------------------------------------------------------------------
+  // TEST 6: Direct publish without an intermediate Save Draft
+  // --------------------------------------------------------------------------
+  test('6. Direct publish: UI-created block is persisted to the published document without a prior draft save', async ({ page }) => {
+    test.setTimeout(300000)
+    const slug = `${TEST_ARTICLE_BASE}-direct-publish`
+    const payload = await getPayload({ config: await config })
+    await payload.delete({ collection: 'articles', where: { slug: { equals: slug } } })
+
+    const article = await payload.create({
+      collection: 'articles',
+      data: {
+        title: 'Direct Publish Article',
+        slug,
+        excerpt: 'Direct publish layout',
+        heroImage: mediaDocs[0].id,
+        author: authorId,
+        publishedDate: new Date().toISOString(),
+        _status: 'draft',
+        content: {
+          root: {
+            type: 'root',
+            format: '' as any,
+            indent: 0,
+            version: 1,
+            direction: 'ltr' as const,
+            children: [textParagraph('Direct publish intro')],
+          },
+        },
+      },
+    })
+
+    await login({ page, user: testUser })
+    await openArticleEditor(page, article.id)
+    await insertVisualMediaLayoutBlock(page)
+    await chooseMediaInLayout(
+      page,
+      page.locator('.vml-empty-canvas').last(),
+      mediaDocs.slice(0, 2).map((d) => d.id),
+    )
+
+    await expect(page.locator('.vml-canvas-stage').last().locator('.vml-image-cell')).toHaveCount(2)
+
+    // Publish directly - no Save Draft in between.
+    const publishRes = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save').click()
+    expect((await publishRes).status).toBeLessThan(400)
+    await page.waitForTimeout(1000)
+
+    const expectedIds = mediaDocs.slice(0, 2).map((d) => d.id)
+    const published = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: false,
+      depth: 0,
+    })
+    expect(published._status).toBe('published')
+    const publishedBlock = getVisualBlocks(published)[0]
+    expect(publishedBlock.fields.layoutData.cells.map((c: any) => c.mediaId)).toEqual(expectedIds)
+    expect(publishedBlock.fields.mediaItems).toEqual(expectedIds)
+
+    // Reopening the editor reads the published layout back.
+    await openArticleEditor(page, article.id)
+    await expect(page.locator('.vml-canvas-stage').last().locator('.vml-image-cell')).toHaveCount(2)
+
+    await page.goto(`http://localhost:3000/articles/${slug}`)
+    await page.waitForLoadState('networkidle')
+    const publicStage = page.locator('.vml-public-stage').last()
+    await expect(publicStage).toBeVisible()
+    await publicStage.scrollIntoViewIfNeeded()
+    await expect(publicStage.locator('.vml-public-cell')).toHaveCount(2)
+    await expectImagesLoaded(publicStage)
+  })
+
+  // --------------------------------------------------------------------------
+  // TEST 7: Undo/redo of layout changes and empty-state restoration
+  // --------------------------------------------------------------------------
+  test('7. Undo/redo restores layout state, and deleting every image persists an authoritative empty layout', async ({ page }) => {
+    test.setTimeout(300000)
+    const slug = `${TEST_ARTICLE_BASE}-undo-empty`
+    const payload = await getPayload({ config: await config })
+    await payload.delete({ collection: 'articles', where: { slug: { equals: slug } } })
+
+    const article = await payload.create({
+      collection: 'articles',
+      data: {
+        title: 'Undo Empty Article',
+        slug,
+        excerpt: 'Undo and empty state',
+        heroImage: mediaDocs[0].id,
+        author: authorId,
+        publishedDate: new Date().toISOString(),
+        _status: 'draft',
+        content: {
+          root: {
+            type: 'root',
+            format: '' as any,
+            indent: 0,
+            version: 1,
+            direction: 'ltr' as const,
+            children: [textParagraph('Undo intro')],
+          },
+        },
+      },
+    })
+
+    await login({ page, user: testUser })
+    await openArticleEditor(page, article.id)
+    await insertVisualMediaLayoutBlock(page)
+    await chooseMediaInLayout(
+      page,
+      page.locator('.vml-empty-canvas').last(),
+      mediaDocs.slice(0, 2).map((d) => d.id),
+    )
+
+    const cells = page.locator('.vml-canvas-stage').last().locator('.vml-image-cell')
+    await expect(cells).toHaveCount(2)
+
+    // Add a third image, then undo that layout change. Undo must follow the
+    // Lexical node (the serialized source of truth) rather than stale form state.
+    await chooseMediaInLayout(page, page.locator('.vml-canvas-root').last(), [mediaDocs[2].id])
+    await expect(cells).toHaveCount(3)
+
+    await page.getByText('Undo intro').click()
+    await page.keyboard.press('Control+z')
+    await expect(page.locator('.vml-canvas-stage').last().locator('.vml-image-cell')).toHaveCount(2, {
+      timeout: 10000,
+    })
+
+    // Redo restores the third image.
+    await page.keyboard.press('Control+Shift+z')
+    await expect(page.locator('.vml-canvas-stage').last().locator('.vml-image-cell')).toHaveCount(3)
+
+    // Delete every image through the real per-cell action.
+    const block = page.locator('.vml-layout-block, .vml-canvas-root').last()
+    await deleteAllLayoutCells(page, block)
+    await expect(page.locator('.vml-empty-canvas')).toBeVisible()
+
+    const draftSave = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save-draft').click()
+    expect((await draftSave).status).toBeLessThan(400)
+    await page.waitForTimeout(1000)
+
+    const draft = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: true,
+      depth: 0,
+    })
+    const draftBlock = getVisualBlocks(draft)[0]
+    expect(draftBlock.fields.layoutData.cells).toEqual([])
+    expect(draftBlock.fields.mediaItems).toEqual([])
+
+    // Reload: the empty layout is authoritative and no images resurrect.
+    await openArticleEditor(page, article.id)
+    await expect(page.locator('.vml-empty-canvas')).toBeVisible()
+    await expect(page.locator('.vml-image-cell')).toHaveCount(0)
+
+    // Publish the empty layout and verify the public page renders no stage.
+    const publishRes = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save').click()
+    expect((await publishRes).status).toBeLessThan(400)
+    await page.waitForTimeout(1000)
+
+    await page.goto(`http://localhost:3000/articles/${slug}`)
+    await page.waitForLoadState('networkidle')
+    await expect(page.locator('.vml-public-stage')).toHaveCount(0)
+  })
+
+  // --------------------------------------------------------------------------
+  // TEST 8: Legacy images editing and deletion (no resurrection)
+  // --------------------------------------------------------------------------
+  test('8. Legacy images hydrate in the editor, can be deleted, and never resurrect after save', async ({ page }) => {
+    test.setTimeout(300000)
+    const slug = `${TEST_ARTICLE_BASE}-legacy-delete`
+    const payload = await getPayload({ config: await config })
+    await payload.delete({ collection: 'articles', where: { slug: { equals: slug } } })
+
+    const article = await payload.create({
+      collection: 'articles',
+      data: {
+        title: 'Legacy Edit Article',
+        slug,
+        excerpt: 'Legacy editing and deletion',
         heroImage: mediaDocs[0].id,
         author: authorId,
         publishedDate: new Date().toISOString(),
@@ -532,18 +918,12 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
                 version: 2,
                 fields: {
                   blockType: 'visualMediaLayout',
-                  blockName: 'Gallery Block',
-                  layoutData: {
-                    version: 2,
-                    cells: [],
-                    columns: 1,
-                    columnTracks: [100],
-                    rows: 1,
-                    canvasWidth: 1200,
-                    totalHeight: 280,
-                  },
-                  mediaItems: [],
-                  caption: '',
+                  blockName: 'Legacy Only',
+                  // Relationship IDs only: exercises the editor's media resolution.
+                  images: [
+                    { image: mediaDocs[0].id, altText: 'Legacy A' },
+                    { image: mediaDocs[1].id, altText: 'Legacy B' },
+                  ],
                 },
               },
             ],
@@ -553,75 +933,58 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     })
 
     await login({ page, user: testUser })
-    await page.goto(`http://localhost:3000/admin/collections/articles/${article.id}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, article.id)
 
-    // 1. Insert 3 images via InlineMediaSelector
-    const chooseBtn = page.locator('button:has-text("Choose Existing Media")').first()
-    await chooseBtn.click()
+    const block = page.locator('.vml-canvas-root').last()
+    await expect(block.locator('.vml-image-cell')).toHaveCount(2)
+    await expectImagesLoaded(block)
+
+    const srcs = await block
+      .locator('.vml-image-cell img')
+      .evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src')))
+    expect(srcs).toEqual([mediaDocs[0].url, mediaDocs[1].url])
+
+    // Delete both legacy images and save.
+    await deleteAllLayoutCells(page, block)
+    await expect(page.locator('.vml-empty-canvas')).toBeVisible()
+
+    const draftSave = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save-draft').click()
+    expect((await draftSave).status).toBeLessThan(400)
     await page.waitForTimeout(1000)
 
-    const cards = page.locator('div[style*="cursor: pointer"]')
-    await cards.nth(0).click()
-    await cards.nth(1).click()
-    await cards.nth(2).click()
+    const draft = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: true,
+      depth: 0,
+    })
+    const draftBlock = getVisualBlocks(draft)[0]
+    expect(draftBlock.fields.layoutData.cells).toEqual([])
+    // The legacy relationship array is untouched but must be ignored.
+    expect(draftBlock.fields.images).toHaveLength(2)
 
-    const insertBtn = page.locator('button:has-text("Insert")').first()
-    await insertBtn.click()
+    await openArticleEditor(page, article.id)
+    await expect(page.locator('.vml-empty-canvas')).toBeVisible()
+    await expect(page.locator('.vml-image-cell')).toHaveCount(0)
+
+    const publishRes = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save').click()
+    expect((await publishRes).status).toBeLessThan(400)
     await page.waitForTimeout(1000)
 
-    const stage = page.locator('.vml-canvas-stage')
-    await expect(stage).toBeVisible()
-    const cells = stage.locator('.vml-image-cell')
-    await expect(cells).toHaveCount(3)
-
-    // 2. Click Save Draft
-    const saveBtn = page.locator('button#action-save, button:has-text("Save Draft")').first()
-    await expect(saveBtn).toBeVisible()
-    expect(await saveBtn.getAttribute('aria-disabled')).not.toBe('true')
-    await saveBtn.click()
-    await page.waitForTimeout(4000)
-
-    // Verify in database draft
-    const draftInDb = await payload.findByID({ collection: 'articles', id: article.id, draft: true })
-    const draftFields = (draftInDb.content as any).root.children[0].fields
-    expect(draftFields.layoutData.cells).toHaveLength(3)
-    expect(draftFields.mediaItems).toHaveLength(3)
-
-    // 3. Refresh page and verify all 3 images remain
-    await page.reload()
-    await page.waitForLoadState('networkidle')
-    await expect(stage).toBeVisible()
-    await expect(stage.locator('.vml-image-cell')).toHaveCount(3)
-
-    // 4. Click Publish
-    const publishBtn = page.locator('button#action-publish, button:has-text("Publish")').first()
-    await expect(publishBtn).toBeVisible()
-    await publishBtn.click()
-    await page.waitForTimeout(4000)
-
-    // 5. Open Public Article Page and verify public rendering
     await page.goto(`http://localhost:3000/articles/${slug}`)
     await page.waitForLoadState('networkidle')
-
-    const publicStage = page.locator('.vml-public-stage')
-    await expect(publicStage).toBeVisible()
-    const publicCells = publicStage.locator('.vml-public-cell')
-    await expect(publicCells).toHaveCount(3)
-
-    // Verify all 3 public cells are visible and have non-zero dimensions
-    for (let i = 0; i < 3; i++) {
-      const box = await publicCells.nth(i).boundingBox()
-      expect(box).toBeTruthy()
-      expect(box!.width).toBeGreaterThan(50)
-      expect(box!.height).toBeGreaterThan(50)
-    }
+    await expect(page.locator('.vml-public-stage')).toHaveCount(0)
   })
 
   // --------------------------------------------------------------------------
-  // TEST 6: Two Independent Layout Blocks (Requirement E)
+  // TEST 9: Two Independent Layout Blocks (Requirement E)
   // --------------------------------------------------------------------------
-  test('6. Two independent layout blocks: persist and customize independently without cross-talk', async ({ page }) => {
+  test('9. Two independent layout blocks: persist and customize independently without cross-talk', async ({ page }) => {
+    test.setTimeout(300000)
     const slug = `${TEST_ARTICLE_BASE}-two-blocks`
     const payload = await getPayload({ config: await config })
 
@@ -742,8 +1105,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     })
 
     await login({ page, user: testUser })
-    await page.goto(`http://localhost:3000/admin/collections/articles/${article.id}`)
-    await page.waitForLoadState('networkidle')
+    await openArticleEditor(page, article.id)
 
     const stages = page.locator('.vml-canvas-stage')
     await expect(stages).toHaveCount(2)
@@ -755,7 +1117,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     // Customize Block 2 by resizing its first cell
     const block2Cell1 = stages.nth(1).locator('.vml-image-cell').first()
     await block2Cell1.click()
-    const handleE = page.locator('div[title="Drag right edge to resize width"]')
+    const handleE = stages.nth(1).locator('div[title="Drag right edge to resize width"]')
     await expect(handleE).toBeVisible()
     const handleEBox = (await handleE.boundingBox())!
 
@@ -763,24 +1125,17 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     await page.mouse.down()
     await page.mouse.move(handleEBox.x - 60, handleEBox.y, { steps: 5 })
     await page.mouse.up()
-    await page.waitForTimeout(300)
+    await expect
+      .poll(async () => (await block2Cell1.boundingBox())!.width)
+      .toBeLessThan(592 - 5)
 
-    // Form is modified because Block 2 was customized!
-    const saveBtn = page.locator('button#action-save, button:has-text("Save Draft")').first()
-    await expect(saveBtn).toBeEnabled()
-
-    const savePromise = page.waitForResponse(
-      (res) =>
-        res.url().includes(`/api/articles/${article.id}`) &&
-        (res.request().method() === 'PATCH' || res.request().method() === 'POST') &&
-        res.status() === 200,
-    )
-    await saveBtn.click()
-    const patchRes = await savePromise
-    const json = await patchRes.json()
+    const saveResponse = waitForArticleSave(page, article.id)
+    await waitForEditorFieldSync(page)
+    await page.locator('#action-save-draft').click()
+    const savedJson = (await saveResponse).json
 
     // Inspect server response to verify independence in database
-    const blocksInDb = json.doc.content.root.children.filter((n: any) => n.fields?.blockType === 'visualMediaLayout')
+    const blocksInDb = getVisualBlocks(savedJson.doc)
     expect(blocksInDb.length).toBe(2)
     // Block 1 untouched
     expect(blocksInDb[0].fields.layoutData.cells.length).toBe(1)
@@ -788,17 +1143,27 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     // Block 2 updated
     expect(blocksInDb[1].fields.layoutData.cells.length).toBe(2)
     expect(blocksInDb[1].fields.layoutData.cells[0].width).toBeLessThan(592)
+    const block2SavedWidth = blocksInDb[1].fields.layoutData.cells[0].width
 
-    // Reload editor and verify independence
-    await page.reload()
-    await page.waitForLoadState('networkidle')
+    // Reload editor and verify independence survives the round trip
+    await openArticleEditor(page, article.id)
 
     const stagesAfter = page.locator('.vml-canvas-stage')
     await expect(stagesAfter).toHaveCount(2)
     await expect(stagesAfter.nth(0).locator('.vml-image-cell')).toHaveCount(1)
     await expect(stagesAfter.nth(1).locator('.vml-image-cell')).toHaveCount(2)
 
-    // Public article page renders both blocks accurately without cross-talk
+    const persisted = await payload.findByID({
+      collection: 'articles',
+      id: article.id,
+      draft: true,
+      depth: 0,
+    })
+    const persistedBlocks = getVisualBlocks(persisted)
+    expect(persistedBlocks[0].fields.layoutData.cells[0].width).toBe(1200)
+    expect(persistedBlocks[1].fields.layoutData.cells[0].width).toBe(block2SavedWidth)
+
+    // Public preview renders both blocks accurately without cross-talk
     await page.goto(`http://localhost:3000/articles/${slug}?preview=true`)
     await page.waitForLoadState('networkidle')
 
@@ -806,5 +1171,7 @@ test.describe('Visual Media Layout - Complete Specification Test Suite', () => {
     await expect(publicStages).toHaveCount(2)
     await expect(publicStages.nth(0).locator('.vml-public-cell')).toHaveCount(1)
     await expect(publicStages.nth(1).locator('.vml-public-cell')).toHaveCount(2)
+    await publicStages.nth(1).scrollIntoViewIfNeeded()
+    await expectImagesLoaded(publicStages.nth(1))
   })
 })

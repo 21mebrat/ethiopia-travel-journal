@@ -24,7 +24,39 @@ export const Advertisements: CollectionConfig = {
     },
     admin: {
         useAsTitle: "title",
-        defaultColumns: ["title", "status", "createdAt"],
+        preview: (doc, { locale }) => {
+            if (doc?.slug)
+                return `/advertisement/${doc.slug}?locale=${locale || 'en'}&preview=true`
+            return null
+        },
+        livePreview: {
+            url: ({ data, locale }) => {
+                if (data?.slug)
+                    return `/advertisement/${data.slug}?locale=${locale?.code || 'en'}&preview=true`
+                return null
+            },
+            breakpoints: [
+                {
+                    label: 'Mobile (ስልክ)',
+                    name: 'mobile',
+                    width: 375,
+                    height: 667,
+                },
+                {
+                    label: 'Tablet (ታብሌት)',
+                    name: 'tablet',
+                    width: 768,
+                    height: 1024,
+                },
+                {
+                    label: 'Desktop (ዴስክቶፕ)',
+                    name: 'desktop',
+                    width: 1440,
+                    height: 900,
+                },
+            ],
+        },
+        defaultColumns: ["heroImage", "title", "status", "createdAt"],
         listSearchableFields: ["title", "status"]
     },
     fields: [
@@ -63,6 +95,39 @@ export const Advertisements: CollectionConfig = {
                     en: "Content of the advertisement"
                 },
             }
+        },
+        {
+            name: "slug",
+            type: "text",
+            required: true,
+            localized: true,
+            index: true,
+            admin: {
+                description: {
+                    en: "URL friendly version of the title",
+                    am: "የርዕሱ የURL አይነት",
+                },
+                placeholder: {
+                    en: "Enter slug",
+                    am: "ስለቱ ያስገቡ",
+                }
+            },
+            hooks: {
+                beforeValidate: [
+                    ({ value, data }) => {
+                        const source = value || data?.title
+                        if (typeof source === 'string') {
+                            return source
+                                .toLowerCase()
+                                .trim()
+                                .replace(/[^\w\s-]/g, '')
+                                .replace(/[\s_-]+/g, '-')
+                                .replace(/^-+|-+$/g, '')
+                        }
+                        return value
+                    },
+                ],
+            },
         },
         {
             name: "heroImage",

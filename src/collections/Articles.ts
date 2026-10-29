@@ -1,5 +1,5 @@
 import type { CollectionConfig, Where } from 'payload'
-import { BlocksFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
+import { BlocksFeature, FixedToolbarFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
 import { ImageGallery } from '../blocks/ImageGallery'
 import { VisualMediaLayout } from '../blocks/VisualMediaLayout'
 
@@ -366,7 +366,10 @@ export const Articles: CollectionConfig = {
           ...defaultFeatures.filter((f) => f.key !== 'upload'),
           // 1. Single Media Upload: Default upload with zero form drawer inputs; resized & positioned directly on canvas by mouse cursor
           UploadFeature(),
-          // 2. Visual Media Layout: 100% mouse-driven visual drag-and-drop freeform grid builder with proportional column resizers & inline media selector
+          // 2. Fixed toolbar: exposes the block-insertion menu so editors can add
+          // a Visual Media Layout directly from the editor UI.
+          FixedToolbarFeature(),
+          // 3. Visual Media Layout: 100% mouse-driven visual drag-and-drop freeform grid builder with proportional column resizers & inline media selector
           BlocksFeature({
             blocks: [VisualMediaLayout, ImageGallery],
           }),

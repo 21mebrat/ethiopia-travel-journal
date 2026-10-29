@@ -1,5 +1,5 @@
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
-import { BlocksFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
+import { BlocksFeature, FixedToolbarFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -16,6 +16,7 @@ import { VisualMediaLayout } from './blocks/VisualMediaLayout'
 import { en } from '@payloadcms/translations/languages/en'
 import { am } from './i18n/am'
 import { Comments } from './collections/Comments'
+import { Advertisements } from './collections/Advertisements'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -24,6 +25,7 @@ const configuredEditor = lexicalEditor({
   features: ({ defaultFeatures }) => [
     ...defaultFeatures.filter((f) => f.key !== 'upload'),
     UploadFeature(),
+    FixedToolbarFeature(),
     BlocksFeature({
       blocks: [ImageGallery, VisualMediaLayout],
     }),
@@ -129,7 +131,7 @@ export default buildConfig({
     },
     suppressHydrationWarning: true,
   },
-  collections: [Users, Media, Categories, Destinations, Articles, Comments],
+  collections: [Users, Media, Categories, Destinations, Articles, Comments, Advertisements],
   localization: {
     locales: [
       {

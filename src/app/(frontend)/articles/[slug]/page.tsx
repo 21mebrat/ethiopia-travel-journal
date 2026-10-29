@@ -159,99 +159,9 @@ export default async function ArticlePage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {/* 2. Top Navigation Bar */}
-      <header
-        style={{
-          borderBottom: '1px solid #e7e5e4',
-          background: '#ffffff',
-          padding: '16px 24px',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1000px',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              textDecoration: 'none',
-              color: '#78350f',
-              fontWeight: 700,
-              fontSize: '17px',
-            }}
-          >
-            <span>🇪🇹</span>
-            <span>{isAmharic ? 'የኢትዮጵያ ጉዞ ማስታወሻ' : 'Ethiopia Travel Journal'}</span>
-          </Link>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Language Switcher for Preview */}
-            <div
-              style={{
-                display: 'flex',
-                background: '#f5f5f4',
-                borderRadius: '6px',
-                padding: '2px',
-                fontSize: '12px',
-              }}
-            >
-              <Link
-                href={`/articles/${slug}?locale=en${isPreview ? '&preview=true' : ''}`}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  textDecoration: 'none',
-                  color: locale === 'en' ? '#ffffff' : '#78716c',
-                  background: locale === 'en' ? '#d97706' : 'transparent',
-                  fontWeight: locale === 'en' ? 600 : 400,
-                }}
-              >
-                EN
-              </Link>
-              <Link
-                href={`/articles/${slug}?locale=am${isPreview ? '&preview=true' : ''}`}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  textDecoration: 'none',
-                  color: locale === 'am' ? '#ffffff' : '#78716c',
-                  background: locale === 'am' ? '#d97706' : 'transparent',
-                  fontWeight: locale === 'am' ? 600 : 400,
-                }}
-              >
-                አማ (AM)
-              </Link>
-            </div>
-
-            <Link
-              href="/admin/collections/articles"
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                background: '#f5f5f4',
-                color: '#44403c',
-                textDecoration: 'none',
-                fontSize: '13px',
-                fontWeight: 500,
-                border: '1px solid #e7e5e4',
-              }}
-            >
-              {isAmharic ? 'የአስተዳዳሪ ክፍል' : 'Admin Panel'}
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* 3. Main Article Content Container */}
-      <main
+      <div
         style={{
           maxWidth: '820px',
           margin: '0 auto',
@@ -462,7 +372,7 @@ export default async function ArticlePage({ params, searchParams }: Props) {
             <RichText data={article.content} converters={articleJSXConverters} />
           </div>
         )}
-      </main>
+      </div>
     </article>
   )
 }

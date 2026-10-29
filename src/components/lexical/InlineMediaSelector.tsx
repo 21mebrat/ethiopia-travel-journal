@@ -220,6 +220,7 @@ export function InlineMediaSelector({
         ref={popoverRef}
         role="dialog"
         aria-label="Media Selector"
+        data-testid="vml-media-selector"
         style={{
           width: '100%',
           maxWidth: '620px',
@@ -354,6 +355,7 @@ export function InlineMediaSelector({
                 <button
                   type="button"
                   onClick={handleConfirmMultiSelect}
+                  data-testid="vml-insert-selected"
                   style={{
                     padding: '8px 16px',
                     background: 'var(--chart-1, #d97706)',
@@ -406,6 +408,8 @@ export function InlineMediaSelector({
                       <div
                         key={item.id}
                         onClick={() => toggleItemSelection(item)}
+                        data-testid="vml-media-card"
+                        data-media-id={item.id}
                         style={{
                           background: isChecked ? 'var(--accent)' : 'var(--card)',
                           border: isChecked ? '2px solid var(--chart-1, #d97706)' : '1px solid var(--border)',
