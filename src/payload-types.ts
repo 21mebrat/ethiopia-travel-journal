@@ -74,6 +74,9 @@ export interface Config {
     articles: Article;
     comments: Comment;
     title: Title;
+    subscribers: Subscriber;
+    'newsletter-broadcasts': NewsletterBroadcast;
+    'newsletter-deliveries': NewsletterDelivery;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +91,9 @@ export interface Config {
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     comments: CommentsSelect<false> | CommentsSelect<true>;
     title: TitleSelect<false> | TitleSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
+    'newsletter-broadcasts': NewsletterBroadcastsSelect<false> | NewsletterBroadcastsSelect<true>;
+    'newsletter-deliveries': NewsletterDeliveriesSelect<false> | NewsletterDeliveriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -289,13 +295,39 @@ export interface Destination {
    */
   featured?: boolean | null;
   /**
+   * Primary category used for top filter tabs.
+   */
+  category?: ('historic_sites' | 'natural_wonders' | 'cities_towns' | 'cultural_experiences' | 'wildlife_parks') | null;
+  /**
+   * Descriptive badges rendered on destination cards.
+   */
+  tags?: string | null;
+  /**
    * Wide banner photograph (16:9 ratio recommended) shown at the top of the guide.
    */
   heroImage: string | Media;
   /**
-   * Short introductory summary for destination cards and Google search snippets.
+   * Short introductory summary for destination cards and Google search previews.
    */
   overview: string;
+  /**
+   * Comprehensive editorial guide, history, and travel advice for this destination.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   travelInfo?: {
     /**
      * Optimal weather window for hiking or sightseeing.
@@ -324,6 +356,28 @@ export interface Destination {
         id?: string | null;
       }[]
     | null;
+  quickInfo?: {
+    mainAttractions?: string | null;
+    idealFor?: string | null;
+    visitDuration?: string | null;
+  };
+  attractions?:
+    | {
+        name: string;
+        description?: string | null;
+        image?: (string | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  recommendedAccommodation?: {
+    name?: string | null;
+    rating?: number | null;
+    reviewCount?: number | null;
+    category?: string | null;
+    description?: string | null;
+    image?: (string | null) | Media;
+    link?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -407,6 +461,10 @@ export interface Article {
      */
     ogImage?: (string | null) | Media;
   };
+  /**
+   * Timestamp when automated newsletter was first dispatched.
+   */
+  newsletterPublishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -476,6 +534,128 @@ export interface Title {
    * Media of the advertisement
    */
   heroImage?: (string | null) | Media;
+  /**
+   * Controls whether this advertisement is eligible for display.
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Where this advertisement should be rendered across the site.
+   */
+  placement?: ('all' | 'destination_listing' | 'destination_detail' | 'stories' | 'general') | null;
+  /**
+   * Design layout used to render this advertisement.
+   */
+  variant?: ('standard' | 'lodge' | 'airline') | null;
+  /**
+   * Action label for the link button (defaults to 'Learn More' / 'ይመልከቱ').
+   */
+  ctaText?: string | null;
+  /**
+   * Target URL when the user clicks the ad button.
+   */
+  ctaLink?: string | null;
+  /**
+   * Badge text overlaid on the card (defaults to 'SPONSORED' / 'ስፖንሰር የተደረገ').
+   */
+  sponsorLabel?: string | null;
+  /**
+   * How long this advertisement remains visible before rotating to the next ad. (Default: 10).
+   */
+  durationValue?: number | null;
+  /**
+   * Time unit for display duration (seconds, minutes, hours, days).
+   */
+  durationUnit?: ('seconds' | 'minutes' | 'hours' | 'days') | null;
+  /**
+   * Optional start date. Ad is inactive before this date.
+   */
+  startDate?: string | null;
+  /**
+   * Optional expiration date. Ad is inactive after this date.
+   */
+  endDate?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage email subscribers to the Ethiopia Travel Journal newsletter.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: string;
+  email: string;
+  status: 'pending' | 'subscribed' | 'unsubscribed';
+  locale?: ('en' | 'am') | null;
+  source?: string | null;
+  /**
+   * SHA-256 hash of single-use confirmation token.
+   */
+  confirmationTokenHash?: string | null;
+  /**
+   * Timestamp when confirmation link expires.
+   */
+  confirmationExpiresAt?: string | null;
+  /**
+   * SHA-256 hash of secure unsubscribe token.
+   */
+  unsubscribeTokenHash?: string | null;
+  tokenVersion?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tracks automated article newsletter broadcast events and execution status.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-broadcasts".
+ */
+export interface NewsletterBroadcast {
+  id: string;
+  article: string | Article;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
+  /**
+   * Tracks whether recipient delivery rows have all been created.
+   */
+  fanoutStatus?: ('pending' | 'in_progress' | 'completed') | null;
+  fanoutCompletedAt?: string | null;
+  totalRecipients?: number | null;
+  sentCount?: number | null;
+  failedCount?: number | null;
+  skippedCount?: number | null;
+  enqueuedAt?: string | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Per-recipient delivery state with stable unique keys for at-least-once newsletter reliability.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-deliveries".
+ */
+export interface NewsletterDelivery {
+  id: string;
+  broadcast: string | NewsletterBroadcast;
+  article: string | Article;
+  subscriber: string | Subscriber;
+  recipientEmail: string;
+  /**
+   * Stable uniqueness key (${articleId}_${subscriberId}) preventing duplicate delivery across worker retries.
+   */
+  deliveryKey: string;
+  status: 'pending' | 'sending' | 'sent' | 'failed' | 'skipped';
+  attempts?: number | null;
+  lastError?: string | null;
+  sentAt?: string | null;
+  /**
+   * Identifier of the worker instance currently leasing this delivery.
+   */
+  workerId?: string | null;
+  leaseClaimedAt?: string | null;
+  leaseExpiresAt?: string | null;
+  locale?: ('en' | 'am') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -530,6 +710,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'title';
         value: string | Title;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: string | Subscriber;
+      } | null)
+    | ({
+        relationTo: 'newsletter-broadcasts';
+        value: string | NewsletterBroadcast;
+      } | null)
+    | ({
+        relationTo: 'newsletter-deliveries';
+        value: string | NewsletterDelivery;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -649,8 +841,11 @@ export interface DestinationsSelect<T extends boolean = true> {
   slug?: T;
   region?: T;
   featured?: T;
+  category?: T;
+  tags?: T;
   heroImage?: T;
   overview?: T;
+  content?: T;
   travelInfo?:
     | T
     | {
@@ -670,6 +865,32 @@ export interface DestinationsSelect<T extends boolean = true> {
         image?: T;
         caption?: T;
         id?: T;
+      };
+  quickInfo?:
+    | T
+    | {
+        mainAttractions?: T;
+        idealFor?: T;
+        visitDuration?: T;
+      };
+  attractions?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        image?: T;
+        id?: T;
+      };
+  recommendedAccommodation?:
+    | T
+    | {
+        name?: T;
+        rating?: T;
+        reviewCount?: T;
+        category?: T;
+        description?: T;
+        image?: T;
+        link?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -697,6 +918,7 @@ export interface ArticlesSelect<T extends boolean = true> {
         metaDescription?: T;
         ogImage?: T;
       };
+  newsletterPublishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -722,6 +944,71 @@ export interface TitleSelect<T extends boolean = true> {
   content?: T;
   slug?: T;
   heroImage?: T;
+  status?: T;
+  placement?: T;
+  variant?: T;
+  ctaText?: T;
+  ctaLink?: T;
+  sponsorLabel?: T;
+  durationValue?: T;
+  durationUnit?: T;
+  startDate?: T;
+  endDate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  locale?: T;
+  source?: T;
+  confirmationTokenHash?: T;
+  confirmationExpiresAt?: T;
+  unsubscribeTokenHash?: T;
+  tokenVersion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-broadcasts_select".
+ */
+export interface NewsletterBroadcastsSelect<T extends boolean = true> {
+  article?: T;
+  status?: T;
+  fanoutStatus?: T;
+  fanoutCompletedAt?: T;
+  totalRecipients?: T;
+  sentCount?: T;
+  failedCount?: T;
+  skippedCount?: T;
+  enqueuedAt?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-deliveries_select".
+ */
+export interface NewsletterDeliveriesSelect<T extends boolean = true> {
+  broadcast?: T;
+  article?: T;
+  subscriber?: T;
+  recipientEmail?: T;
+  deliveryKey?: T;
+  status?: T;
+  attempts?: T;
+  lastError?: T;
+  sentAt?: T;
+  workerId?: T;
+  leaseClaimedAt?: T;
+  leaseExpiresAt?: T;
+  locale?: T;
   updatedAt?: T;
   createdAt?: T;
 }

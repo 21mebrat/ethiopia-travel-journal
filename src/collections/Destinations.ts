@@ -1,4 +1,7 @@
 import type { CollectionConfig } from 'payload'
+import { BlocksFeature, FixedToolbarFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
+import { ImageGallery } from '../blocks/ImageGallery'
+import { VisualMediaLayout } from '../blocks/VisualMediaLayout'
 
 /**
  * ============================================================================
@@ -322,6 +325,55 @@ export const Destinations: CollectionConfig = {
     },
 
     // ------------------------------------------------------------------------
+    // FIELD 4B: Destination Category Type (`category`)
+    // ------------------------------------------------------------------------
+    {
+      name: 'category',
+      type: 'select',
+      defaultValue: 'historic_sites',
+      label: {
+        en: 'Destination Type',
+        am: 'የመዳረሻ ዓይነት',
+      },
+      options: [
+        { label: { en: 'Historic Sites', am: 'ታሪካዊ ቦታዎች' }, value: 'historic_sites' },
+        { label: { en: 'Natural Wonders', am: 'የተፈጥሮ ድንቆች' }, value: 'natural_wonders' },
+        { label: { en: 'Cities & Towns', am: 'ከተሞች' }, value: 'cities_towns' },
+        { label: { en: 'Cultural Experiences', am: 'ባሕላዊ ልምዶች' }, value: 'cultural_experiences' },
+        { label: { en: 'Wildlife & Parks', am: 'የዱር እንስሳትና ፓርኮች' }, value: 'wildlife_parks' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: {
+          en: 'Primary category used for top filter tabs.',
+          am: 'በማጣሪያው ላይ የሚታይ ዋና ምድብ።',
+        },
+      },
+    },
+
+    // ------------------------------------------------------------------------
+    // FIELD 4C: Descriptive Tags (`tags`)
+    // ------------------------------------------------------------------------
+    {
+      name: 'tags',
+      type: 'text',
+      label: {
+        en: 'Tags (Comma separated)',
+        am: 'መለያዎች (በነጠላ ሰረዝ የተለዩ)',
+      },
+      admin: {
+        placeholder: {
+          en: 'e.g. Historic Site, UNESCO Site, Archaeology',
+          am: 'ለምሳሌ፡ ታሪካዊ ቦታ፣ የዩኔስኮ ቅርስ',
+        },
+        description: {
+          en: 'Descriptive badges rendered on destination cards.',
+          am: 'በመዳረሻ ካርዶች ላይ የሚታዩ መለያዎች።',
+        },
+      },
+    },
+
+    // ------------------------------------------------------------------------
     // FIELD 5: Main Hero Image (`heroImage`)
     // ------------------------------------------------------------------------
     // FIELD TYPE: `type: 'upload'`
@@ -369,8 +421,40 @@ export const Destinations: CollectionConfig = {
           am: 'ይህን ቦታ ልዩ የሚያደርገውን ነገር በአጭሩ ይግለጹ (ታሪክ፣ መልክዓ ምድር፣ ባሕላዊ እሴት)...',
         },
         description: {
-          en: 'Short introductory summary for destination cards and Google search snippets.',
+          en: 'Short introductory summary for destination cards and Google search previews.',
           am: 'ለካርዶች እና ለፍለጋ ውጤቶች የሚሆን አጭር ማጠቃለያ።',
+        },
+      },
+    },
+
+    // ------------------------------------------------------------------------
+    // FIELD 6B: Destination Guide Full Content (`content`)
+    // ------------------------------------------------------------------------
+    // FIELD TYPE: `type: 'richText'` with `localized: true`
+    // Optional full editorial body using the configured Lexical editor
+    {
+      name: 'content',
+      type: 'richText',
+      required: false,
+      localized: true,
+      editor: lexicalEditor({
+        features: ({ defaultFeatures }) => [
+          ...defaultFeatures.filter((f) => f.key !== 'upload'),
+          UploadFeature(),
+          FixedToolbarFeature(),
+          BlocksFeature({
+            blocks: [VisualMediaLayout, ImageGallery],
+          }),
+        ],
+      }),
+      label: {
+        en: 'Destination Guide Content',
+        am: 'የመዳረሻ መመሪያ ይዘት',
+      },
+      admin: {
+        description: {
+          en: 'Comprehensive editorial guide, history, and travel advice for this destination.',
+          am: 'ለዚህ መዳረሻ የሚሆን የተሟላ የጉዞ፣ የታሪክ እና የባህል መመሪያ።',
         },
       },
     },
@@ -430,8 +514,8 @@ export const Destinations: CollectionConfig = {
                 en: 'Altitude (Meters)',
                 am: 'ከፍታ (በሜትር)',
               },
-              min: 0,
-              max: 5000,
+              min: -500,
+              max: 6000,
               admin: {
                 width: '50%',
                 placeholder: {
@@ -581,6 +665,154 @@ export const Destinations: CollectionConfig = {
               am: 'ለምሳሌ፡ የፀሐይ መጥለቂያ ገጽታ በስሜን ተራሮች...',
             },
           },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------------
+    // FIELD 10: Quick Information Box (`quickInfo`)
+    // ------------------------------------------------------------------------
+    {
+      name: 'quickInfo',
+      type: 'group',
+      label: {
+        en: 'Quick Information Box',
+        am: 'ፈጣን መረጃዎች',
+      },
+      fields: [
+        {
+          name: 'mainAttractions',
+          type: 'text',
+          localized: true,
+          label: {
+            en: 'Main Attractions',
+            am: 'ዋና ዋና መስህቦች',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g. Rock-hewn churches, Monasteries, Local culture',
+              am: 'ለምሳሌ፡ ውቅር አብያተ ክርስቲያናት፣ ገዳማት',
+            },
+          },
+        },
+        {
+          name: 'idealFor',
+          type: 'text',
+          localized: true,
+          label: {
+            en: 'Ideal For',
+            am: 'የሚመች ለ',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g. Culture, History, Spiritual Travel',
+              am: 'ለምሳሌ፡ ባሕል፣ ታሪክ፣ መንፈሳዊ ጉዞ',
+            },
+          },
+        },
+        {
+          name: 'visitDuration',
+          type: 'text',
+          localized: true,
+          label: {
+            en: 'Visit Duration',
+            am: 'የጉብኝት ቆይታ',
+          },
+          admin: {
+            placeholder: {
+              en: 'e.g. 2-3 days',
+              am: 'ለምሳሌ፡ 2-3 ቀናት',
+            },
+          },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------------
+    // FIELD 11: Top Attractions (`attractions`)
+    // ------------------------------------------------------------------------
+    {
+      name: 'attractions',
+      type: 'array',
+      labels: {
+        singular: { en: 'Attraction', am: 'መስህብ' },
+        plural: { en: 'Top Attractions', am: 'ዋና ዋና መስህቦች' },
+      },
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          localized: true,
+          label: { en: 'Attraction Name', am: 'የመስህቡ ስም' },
+        },
+        {
+          name: 'description',
+          type: 'text',
+          localized: true,
+          label: { en: 'Short Description', am: 'አጭር መግለጫ' },
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          label: { en: 'Attraction Photo', am: 'የመስህቡ ፎቶ' },
+        },
+      ],
+    },
+
+    // ------------------------------------------------------------------------
+    // FIELD 12: Recommended Accommodation (`recommendedAccommodation`)
+    // ------------------------------------------------------------------------
+    {
+      name: 'recommendedAccommodation',
+      type: 'group',
+      label: {
+        en: 'Recommended Accommodation',
+        am: 'የተመከረ ማረፊያ',
+      },
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          label: { en: 'Hotel / Lodge Name', am: 'የሆቴሉ ስም' },
+        },
+        {
+          name: 'rating',
+          type: 'number',
+          min: 0,
+          max: 5,
+          label: { en: 'Star Rating', am: 'ኮከብ' },
+        },
+        {
+          name: 'reviewCount',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          label: { en: 'Review Count', am: 'የግምገማዎች ብዛት' },
+        },
+        {
+          name: 'category',
+          type: 'text',
+          defaultValue: 'Accommodation',
+          label: { en: 'Category Badge', am: 'የምድብ መለያ' },
+        },
+        {
+          name: 'description',
+          type: 'text',
+          localized: true,
+          label: { en: 'Description', am: 'መግለጫ' },
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          label: { en: 'Hotel Photo', am: 'የሆቴሉ ፎቶ' },
+        },
+        {
+          name: 'link',
+          type: 'text',
+          label: { en: 'Booking / Details Link', am: 'የማስያዣ ማስፈንጠሪያ' },
         },
       ],
     },

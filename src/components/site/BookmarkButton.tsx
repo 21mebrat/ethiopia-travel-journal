@@ -19,7 +19,10 @@ export default function BookmarkButton({
 
   useEffect(() => {
     try {
-      setSaved(window.localStorage.getItem(storageKey) === '1')
+      const isStored = window.localStorage.getItem(storageKey) === '1'
+      queueMicrotask(() => {
+        setSaved(isStored)
+      })
     } catch {
       // Storage can be blocked by the browser; the button still works for the session.
     }

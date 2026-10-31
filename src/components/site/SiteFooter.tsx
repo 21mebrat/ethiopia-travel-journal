@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { ArrowUp } from 'lucide-react'
 import { useEffect } from 'react'
 
 type FooterTopic = {
@@ -79,14 +78,16 @@ export default function SiteFooter({ initialLocale, topics, year }: SiteFooterPr
   }
 
   const homeHref = withLocale('/')
-  const storiesHref = withLocale('/?view=all#featured-stories')
-  const destinationsHref = withLocale('/?view=destinations#featured-stories')
+  const storiesHref = withLocale('/stories')
+  const destinationsHref = withLocale('/destinations')
 
   const homeActive = pathname === '/' && !view && !category && !query
   const storiesActive =
+    pathname.startsWith('/stories') ||
     pathname.startsWith('/articles') ||
     (pathname === '/' && (view === 'all' || Boolean(query)))
-  const destinationsActive = pathname === '/' && view === 'destinations'
+  const destinationsActive =
+    pathname.startsWith('/destinations') || (pathname === '/' && view === 'destinations')
 
   return (
     <footer className="site-footer">
@@ -196,11 +197,12 @@ export default function SiteFooter({ initialLocale, topics, year }: SiteFooterPr
           <p>{copy.copyright(year)}</p>
 
           <div className="site-footer__meta">
-            <Link href="/admin">{copy.admin}</Link>
-            <a href="#top">
-              {copy.top}
-              <ArrowUp aria-hidden="true" size={13} strokeWidth={1.8} />
-            </a>
+            <span
+              className="site-footer__credit font-medium text-xs tracking-wider uppercase"
+              style={{ color: 'var(--chart-1)' }}
+            >
+              Powered By Mebrat Matebie
+            </span>
           </div>
         </div>
       </div>

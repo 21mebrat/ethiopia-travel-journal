@@ -191,8 +191,8 @@ export default function SiteHeader({ locale: initialLocale, dateLabel, topics }:
   }
 
   const homeHref = withLocale('/')
-  const storiesHref = withLocale('/?view=all#featured-stories')
-  const destinationsHref = withLocale('/?view=destinations#featured-stories')
+  const storiesHref = withLocale('/stories')
+  const destinationsHref = withLocale('/destinations')
   const cultureTopic = topics.find((topic) => topic.slug.includes('culture')) ?? topics[0]
   const cultureHref = cultureTopic
     ? withLocale(`/?category=${cultureTopic.slug}#featured-stories`)
@@ -200,9 +200,11 @@ export default function SiteHeader({ locale: initialLocale, dateLabel, topics }:
 
   const homeActive = pathname === '/' && !view && !category && !query
   const storiesActive =
+    pathname.startsWith('/stories') ||
     pathname.startsWith('/articles') ||
     (pathname === '/' && (view === 'all' || Boolean(query)))
-  const destinationsActive = pathname === '/' && view === 'destinations'
+  const destinationsActive =
+    pathname.startsWith('/destinations') || (pathname === '/' && view === 'destinations')
   const cultureActive = pathname === '/' && Boolean(category) && !view
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {

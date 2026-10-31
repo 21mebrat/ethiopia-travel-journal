@@ -17,6 +17,19 @@ import { en } from '@payloadcms/translations/languages/en'
 import { am } from './i18n/am'
 import { Comments } from './collections/Comments'
 import { Advertisements } from './collections/Advertisements'
+import { Subscribers } from './collections/Subscribers'
+import { NewsletterBroadcasts } from './collections/NewsletterBroadcasts'
+import { NewsletterDeliveries } from './collections/NewsletterDeliveries'
+import {
+  newsletterSubscribeHandler,
+  newsletterGetHandler,
+} from './endpoints/newsletterSubscribe'
+import { newsletterConfirmHandler } from './endpoints/newsletterConfirm'
+import {
+  newsletterUnsubscribePostHandler,
+  newsletterUnsubscribeGetHandler,
+} from './endpoints/newsletterUnsubscribe'
+import { getEmailAdapter } from './lib/email/adapter'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -131,7 +144,18 @@ export default buildConfig({
     },
     suppressHydrationWarning: true,
   },
-  collections: [Users, Media, Categories, Destinations, Articles, Comments, Advertisements],
+  collections: [
+    Users,
+    Media,
+    Categories,
+    Destinations,
+    Articles,
+    Comments,
+    Advertisements,
+    Subscribers,
+    NewsletterBroadcasts,
+    NewsletterDeliveries,
+  ],
   localization: {
     locales: [
       {
@@ -247,10 +271,43 @@ export default buildConfig({
     } as any,
   },
   editor,
+  email: getEmailAdapter(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
+  endpoints: [
+    {
+      path: '/newsletter/subscribe',
+      method: 'post',
+      handler: newsletterSubscribeHandler,
+    },
+    {
+      path: '/newsletter/subscribe',
+      method: 'get',
+      handler: newsletterGetHandler,
+    },
+    {
+      path: '/newsletter/confirm',
+      method: 'post',
+      handler: newsletterConfirmHandler,
+    },
+    {
+      path: '/newsletter/confirm',
+      method: 'get',
+      handler: newsletterConfirmHandler,
+    },
+    {
+      path: '/newsletter/unsubscribe',
+      method: 'post',
+      handler: newsletterUnsubscribePostHandler,
+    },
+    {
+      path: '/newsletter/unsubscribe',
+      method: 'get',
+      handler: newsletterUnsubscribeGetHandler,
+    },
+  ],
   db: mongooseAdapter({
     url: process.env.DATABASE_URL || '',
   }),

@@ -2,6 +2,7 @@ import type { CollectionConfig, Where } from 'payload'
 import { BlocksFeature, FixedToolbarFeature, lexicalEditor, UploadFeature } from '@payloadcms/richtext-lexical'
 import { ImageGallery } from '../blocks/ImageGallery'
 import { VisualMediaLayout } from '../blocks/VisualMediaLayout'
+import { afterArticleChange } from '../hooks/afterArticleChange'
 
 /**
  * ============================================================================
@@ -628,10 +629,30 @@ export const Articles: CollectionConfig = {
         },
       ],
     },
+    // Automated Newsletter Publication Timestamp
+    {
+      name: 'newsletterPublishedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: {
+          en: 'Timestamp when automated newsletter was first dispatched.',
+          am: 'ለዚህ ጽሑፍ የመጀመሪያው የዜና መጽሔት ማስታወቂያ የተላከበት ጊዜ።',
+        },
+      },
+    },
   ],
 
   // ==========================================================================
-  // SECTION 7: Timestamps
+  // SECTION 7: Hooks
+  // ==========================================================================
+  hooks: {
+    afterChange: [afterArticleChange],
+  },
+
+  // ==========================================================================
+  // SECTION 8: Timestamps
   // ==========================================================================
   timestamps: true,
 }

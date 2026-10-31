@@ -154,6 +154,26 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@layer utilities {
+  .bg-background { background-color: var(--background); }
+  .text-foreground { color: var(--foreground); }
+  .bg-card { background-color: var(--card); }
+  .text-card-foreground { color: var(--card-foreground); }
+  .bg-popover { background-color: var(--popover); }
+  .text-popover-foreground { color: var(--popover-foreground); }
+  .bg-primary { background-color: var(--primary); }
+  .text-primary-foreground { color: var(--primary-foreground); }
+  .bg-secondary { background-color: var(--secondary); }
+  .text-secondary-foreground { color: var(--secondary-foreground); }
+  .bg-muted { background-color: var(--muted); }
+  .text-muted-foreground { color: var(--muted-foreground); }
+  .bg-accent { background-color: var(--accent); }
+  .text-accent-foreground { color: var(--accent-foreground); }
+  .border-border { border-color: var(--border); }
+  .border-input { border-color: var(--input); }
+  .ring-ring { --tw-ring-color: var(--ring); }
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -1295,7 +1315,28 @@ body {
 }
 
 .story-card__bookmark {
-  display: none;
+  position: absolute;
+  right: 0.65rem;
+  top: 0.65rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.story-card__bookmark:hover {
+  background: var(--muted);
+  color: var(--foreground);
+  transform: scale(1.05);
 }
 
 .home-empty {
@@ -1935,7 +1976,7 @@ body {
 .site-footer {
   position: relative;
   z-index: 1;
-  border-top: 2px solid var(--chart-1);
+  border-top: 2px solid var(--border);
   background: var(--secondary);
   color: var(--foreground);
 }
@@ -2214,3 +2255,115 @@ body {
     font-size: 0.86rem;
   }
 }
+
+/* ==========================================================================
+   Animated Advertisement Components
+   High-end, professional, editorial animations with reduced-motion support
+   ========================================================================== */
+
+@keyframes ad-ken-burns {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.08) translate3d(-1%, -1%, 0);
+  }
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ad-shimmer {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+@keyframes ad-flight-glide {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate3d(6px, -4px, 0) rotate(1deg);
+  }
+  50% {
+    transform: translate3d(12px, 0, 0) rotate(0deg);
+  }
+  75% {
+    transform: translate3d(6px, 4px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes ad-trail-dash {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@keyframes ad-beacon-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.45);
+  }
+}
+
+.animate-ken-burns {
+  animation: ad-ken-burns 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-flight-glide {
+  animation: ad-flight-glide 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-trail-dash {
+  stroke-dasharray: 6 6;
+  animation: ad-trail-dash 2s linear infinite;
+}
+
+.animate-ad-beacon {
+  animation: ad-beacon-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.ad-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ad-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  transform: translateX(-150%) skewX(-20deg);
+  animation: ad-shimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ken-burns,
+  .animate-flight-glide,
+  .animate-trail-dash,
+  .animate-ad-beacon,
+  .ad-shimmer-btn::after {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
