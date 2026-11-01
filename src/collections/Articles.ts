@@ -642,12 +642,102 @@ export const Articles: CollectionConfig = {
         },
       },
     },
+    // ==========================================================================
+    // METRICS & ENGAGEMENT (Server Protected)
+    // ==========================================================================
+    {
+      name: 'viewCount',
+      type: 'number',
+      defaultValue: 0,
+      min: 0,
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: {
+          en: 'Accurate, deduplicated total public article views.',
+          am: 'ትክክለኛ እና የተረጋገጠ አጠቃላይ የጽሑፉ ዕይታዎች ብዛት።',
+        },
+      },
+      access: {
+        read: () => true,
+        create: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+        update: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+      },
+    },
+    {
+      name: 'commentCount',
+      type: 'number',
+      defaultValue: 0,
+      min: 0,
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: {
+          en: 'Count of approved, publicly visible comments on this article.',
+          am: 'የተፈቀዱ እና በይፋ የሚታዩ አስተያየቶች ብዛት።',
+        },
+      },
+      access: {
+        read: () => true,
+        create: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+        update: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+      },
+    },
+    {
+      name: 'engagementScore',
+      type: 'number',
+      defaultValue: 0,
+      min: 0,
+      index: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+        description: {
+          en: 'Algorithmic engagement score calculated from views and approved comments.',
+          am: 'ከዕይታዎች እና አስተያየቶች የተሰላ የተሳትፎ ነጥብ።',
+        },
+      },
+      access: {
+        read: () => true,
+        create: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+        update: ({ req }) => Boolean(req.context?.internalCounterUpdate || (req.user && req.user.role === 'admin')),
+      },
+    },
   ],
 
   // ==========================================================================
   // SECTION 7: Hooks
   // ==========================================================================
   hooks: {
+    beforeChange: [
+      ({ data, originalDoc, req }) => {
+        const isAuthorized = Boolean(
+          req.context?.internalCounterUpdate ||
+            (req.user && req.user.role === 'admin') ||
+            (req.payloadAPI === 'local' && !req.context?.isPublicSubmission),
+        )
+        if (!isAuthorized) {
+          if (originalDoc) {
+            if ('viewCount' in data && data.viewCount !== originalDoc.viewCount) {
+              data.viewCount = originalDoc.viewCount
+            }
+            if ('commentCount' in data && data.commentCount !== originalDoc.commentCount) {
+              data.commentCount = originalDoc.commentCount
+            }
+            if ('engagementScore' in data && data.engagementScore !== originalDoc.engagementScore) {
+              data.engagementScore = originalDoc.engagementScore
+            }
+          } else {
+            data.viewCount = 0
+            data.commentCount = 0
+            data.engagementScore = 0
+          }
+        }
+        return data
+      },
+    ],
     afterChange: [afterArticleChange],
   },
 

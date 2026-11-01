@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Eye, MessageSquare, TrendingUp } from 'lucide-react'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { articleJSXConverters } from '@/components/richText/converters'
 
@@ -12,6 +12,8 @@ import SocialShareBar from '@/components/site/SocialShareBar'
 import AdvertisementCard from '@/components/site/AdvertisementCard'
 import RelatedStoriesWidget from '@/components/site/RelatedStoriesWidget'
 import NewsletterWidget from '@/components/site/NewsletterWidget'
+import ArticleViewTracker from '@/components/site/ArticleViewTracker'
+import ArticleComments from '@/components/site/ArticleComments'
 import { getStoryDetail, getRelatedStories } from '@/lib/site/stories'
 import { getAdvertisements } from '@/lib/site/advertisements'
 import { getSiteLocale, type SiteLocale } from '@/lib/site/locale'
@@ -210,10 +212,52 @@ export default async function ArticlePage({ params, searchParams }: Props) {
                     </span>
                   </div>
                 </div>
+
+                {/* Engagement Metrics in Hero Header */}
+                <div className="flex items-center gap-4 text-xs text-stone-300 border-l border-white/20 pl-4 py-1">
+                  {/* View Count */}
+                  <span
+                    className="flex items-center gap-1.5"
+                    title={isAmharic ? 'አጠቃላይ የጽሑፉ ዕይታዎች' : 'Total article views'}
+                  >
+                    <Eye size={13} className="text-stone-300" />
+                    <span>{story.viewCount.toLocaleString()} {isAmharic ? 'ዕይታዎች' : 'views'}</span>
+                  </span>
+
+                  {/* Comment Count with Jump Anchor */}
+                  <a
+                    href="#comments"
+                    className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+                    title={isAmharic ? 'ወደ አስተያየቶች ይሂዱ' : 'Jump to comments'}
+                  >
+                    <MessageSquare size={13} className="text-stone-300" />
+                    <span>{story.commentCount} {isAmharic ? 'አስተያየቶች' : 'comments'}</span>
+                  </a>
+
+                  {/* Algorithmic Popularity / Engagement Score */}
+                  <span
+                    className="flex items-center gap-1.5 bg-white/10 px-2 py-0.5 rounded-xs text-[11px] font-medium"
+                    title={
+                      isAmharic
+                        ? 'ከዕይታዎች እና አስተያየቶች የተሰላ የተሳትፎ ነጥብ'
+                        : 'Algorithmic engagement score derived from verified views and approved comments'
+                    }
+                  >
+                    <TrendingUp size={12} className="text-amber-400" />
+                    <span>
+                      {isAmharic ? 'ተሳትፎ፡' : 'Popularity:'} {story.engagementScore.toFixed(1)}
+                    </span>
+                  </span>
+                </div>
               </div>
 
               {/* Social Share Bar */}
-              <SocialShareBar title={story.title} variant="inline" locale={locale} />
+              <SocialShareBar
+                title={story.title}
+                variant="inline"
+                locale={locale}
+                url={`${process.env.NEXT_PUBLIC_SERVER_URL || 'https://ethiopia-travel-journal.com'}/articles/${story.slug}`}
+              />
             </div>
           </div>
         </div>
@@ -224,7 +268,7 @@ export default async function ArticlePage({ params, searchParams }: Props) {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
           {/* Left Column: Dynamic Sticky Table of Contents */}
           {toc.length > 0 && (
-            <aside className="hidden xl:block w-48 shrink-0 sticky top-24">
+            <aside className="hidden xl:block w-48 shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <TableOfContents items={toc} locale={locale} />
             </aside>
           )}
@@ -250,10 +294,21 @@ export default async function ArticlePage({ params, searchParams }: Props) {
                 {isAmharic ? 'የጽሑፉ ይዘት ባዶ ነው።' : 'No article content available.'}
               </p>
             )}
+
+            {/* Moderated Article Comments Interface */}
+            <ArticleComments
+              articleId={story.id}
+              slug={story.slug}
+              initialCommentCount={story.commentCount}
+              locale={locale}
+            />
           </main>
 
-          {/* Right Column: Sidebar */}
-          <aside className="w-full lg:w-[320px] xl:w-[360px] shrink-0 space-y-8">
+          {/* Right Column: Sidebar (Sticky on lg screens, matching Left Column) */}
+          <aside
+            aria-label="Article Sidebar"
+            className="w-full lg:w-[320px] xl:w-[360px] shrink-0 space-y-8 lg:sticky lg:top-24 self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-contain"
+          >
             {primaryAd && <AdvertisementCard ad={primaryAd} variant="sidebar" />}
 
             <RelatedStoriesWidget items={relatedStories} locale={locale} />
@@ -285,10 +340,22 @@ export default async function ArticlePage({ params, searchParams }: Props) {
               </div>
             )}
 
-            <SocialShareBar title={story.title} variant="sidebar" locale={locale} />
+            <SocialShareBar
+              title={story.title}
+              variant="sidebar"
+              locale={locale}
+              url={`${process.env.NEXT_PUBLIC_SERVER_URL || 'https://ethiopia-travel-journal.com'}/articles/${story.slug}`}
+            />
           </aside>
         </div>
       </div>
+
+      {/* Deduplicated Client View Tracker */}
+      <ArticleViewTracker
+        articleId={story.id}
+        slug={story.slug}
+        preview={isPreview}
+      />
     </article>
   )
 }

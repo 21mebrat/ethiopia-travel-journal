@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useSyncExternalStore } from 'react'
 import type { TocItem } from '@/lib/site/toc'
 
 type TableOfContentsProps = {
@@ -9,19 +9,21 @@ type TableOfContentsProps = {
   className?: string
 }
 
+const subscribeHash = (callback: () => void) => {
+  window.addEventListener('hashchange', callback)
+  return () => window.removeEventListener('hashchange', callback)
+}
+const getHash = () => (typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '')
+const getHashServer = () => ''
+
 export default function TableOfContents({
   items,
   locale = 'en',
   className = '',
 }: TableOfContentsProps) {
-  const [activeId, setActiveId] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hashId = window.location.hash.replace('#', '')
-      const matched = items.find((item) => item.id === hashId)
-      if (matched) return matched.id
-    }
-    return items[0]?.id || ''
-  })
+  const hash = useSyncExternalStore(subscribeHash, getHash, getHashServer)
+  const [observedActiveId, setObservedActiveId] = useState<string>('')
+  const activeId = observedActiveId || (items.some((i) => i.id === hash) ? hash : items[0]?.id || '')
   const isAmharic = locale === 'am'
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function TableOfContents({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            setActiveId(entry.target.id)
+            setObservedActiveId(entry.target.id)
           }
         })
       },
@@ -65,7 +67,7 @@ export default function TableOfContents({
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault()
-    setActiveId(id)
+    setObservedActiveId(id)
     const element = document.getElementById(id)
     if (element) {
       const prefersReduced =

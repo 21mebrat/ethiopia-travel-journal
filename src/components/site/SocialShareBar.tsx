@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useSyncExternalStore } from 'react'
 import { Link2, Mail, Check, AlertCircle } from 'lucide-react'
 
 type SocialShareBarProps = {
@@ -10,6 +10,10 @@ type SocialShareBarProps = {
   locale?: string
   className?: string
 }
+
+const subscribeNoop = () => () => {}
+const getWindowHref = () => window.location.href
+const getFallbackHref = () => 'https://ethiopia-travel-journal.com'
 
 function FacebookIcon({ size = 14 }: { size?: number }) {
   return (
@@ -53,13 +57,20 @@ export default function SocialShareBar({
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
   const isAmharic = locale === 'am'
 
-  const shareUrl =
-    url || (typeof window !== 'undefined' ? window.location.href : 'https://ethiopia-travel-journal.com')
+  // Hydration-safe external browser URL access via useSyncExternalStore
+  const browserUrl = useSyncExternalStore(
+    subscribeNoop,
+    getWindowHref,
+    getFallbackHref,
+  )
+
+  const shareUrl = url || browserUrl
 
   const handleCopyLink = async () => {
+    const urlToCopy = url || (typeof window !== 'undefined' ? window.location.href : shareUrl)
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl)
+        await navigator.clipboard.writeText(urlToCopy)
         setCopyStatus('copied')
         setTimeout(() => setCopyStatus('idle'), 2000)
         return
@@ -68,7 +79,7 @@ export default function SocialShareBar({
       // Fallback for non-https or browsers lacking clipboard API
       if (typeof document !== 'undefined') {
         const textArea = document.createElement('textarea')
-        textArea.value = shareUrl
+        textArea.value = urlToCopy
         textArea.style.position = 'fixed'
         textArea.style.opacity = '0'
         document.body.appendChild(textArea)
@@ -118,6 +129,7 @@ export default function SocialShareBar({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on Facebook"
+            suppressHydrationWarning
             className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             <FacebookIcon size={14} />
@@ -128,6 +140,7 @@ export default function SocialShareBar({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on X"
+            suppressHydrationWarning
             className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             <TwitterXIcon size={13} />
@@ -138,6 +151,7 @@ export default function SocialShareBar({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on Pinterest"
+            suppressHydrationWarning
             className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             <PinterestIcon size={14} />
@@ -148,6 +162,7 @@ export default function SocialShareBar({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on LinkedIn"
+            suppressHydrationWarning
             className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             <LinkedInIcon size={13} />
@@ -156,6 +171,7 @@ export default function SocialShareBar({
           <a
             href={shareLinks.email}
             aria-label="Share via Email"
+            suppressHydrationWarning
             className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-background transition-colors"
           >
             <Mail size={14} />
@@ -231,6 +247,7 @@ export default function SocialShareBar({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Share on Facebook"
+          suppressHydrationWarning
           className="p-1.5 rounded-full hover:bg-white/20 transition-colors text-white/90 hover:text-white"
         >
           <FacebookIcon size={14} />
@@ -241,6 +258,7 @@ export default function SocialShareBar({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Share on X"
+          suppressHydrationWarning
           className="p-1.5 rounded-full hover:bg-white/20 transition-colors text-white/90 hover:text-white"
         >
           <TwitterXIcon size={13} />
@@ -251,6 +269,7 @@ export default function SocialShareBar({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Share on Pinterest"
+          suppressHydrationWarning
           className="p-1.5 rounded-full hover:bg-white/20 transition-colors text-white/90 hover:text-white flex items-center justify-center"
         >
           <PinterestIcon size={14} />
@@ -259,6 +278,7 @@ export default function SocialShareBar({
         <a
           href={shareLinks.email}
           aria-label="Share by Email"
+          suppressHydrationWarning
           className="p-1.5 rounded-full hover:bg-white/20 transition-colors text-white/90 hover:text-white"
         >
           <Mail size={14} />

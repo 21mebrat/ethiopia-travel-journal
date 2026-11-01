@@ -30,6 +30,9 @@ export type StoryItem = {
   }
   richText?: any
   tags?: string[]
+  viewCount: number
+  commentCount: number
+  engagementScore: number
 }
 
 export type PopularStoryItem = {
@@ -38,6 +41,9 @@ export type PopularStoryItem = {
   slug: string
   image: string
   readTime: string
+  viewCount?: number
+  commentCount?: number
+  engagementScore?: number
 }
 
 export type RelatedStoryItem = {
@@ -116,6 +122,15 @@ function formatPayloadArticle(article: any, locale: SiteLocale): StoryItem {
     },
     richText: article.content,
     tags,
+    viewCount: typeof article.viewCount === 'number' && !Number.isNaN(article.viewCount)
+      ? Math.max(0, article.viewCount)
+      : 0,
+    commentCount: typeof article.commentCount === 'number' && !Number.isNaN(article.commentCount)
+      ? Math.max(0, article.commentCount)
+      : 0,
+    engagementScore: typeof article.engagementScore === 'number' && !Number.isNaN(article.engagementScore)
+      ? Math.max(0, article.engagementScore)
+      : 0,
   }
 }
 
@@ -173,8 +188,8 @@ export async function getStoriesList(args: {
     if (sort === 'oldest') {
       sortQuery = 'publishedDate'
     } else if (sort === 'popular') {
-      // Use legitimate stored properties from Articles schema (featured flag & readingTimeMinutes)
-      sortQuery = ['-featured', '-readingTimeMinutes', '-publishedDate']
+      // Deterministic popularity sorting on engagementScore before pagination
+      sortQuery = ['-engagementScore', '-publishedDate', '-id']
     }
 
     // Build query conditions
@@ -257,7 +272,7 @@ export async function getStoriesList(args: {
       featuredStories = stories.slice(0, 2)
     }
 
-    // Query genuine popular stories using legitimate stored metrics
+    // Query genuine popular stories using calculated engagement metrics
     const popularResult = await payload.find({
       collection: 'articles',
       where: {
@@ -266,7 +281,7 @@ export async function getStoriesList(args: {
       depth: 1,
       locale,
       fallbackLocale: 'en',
-      sort: ['-featured', '-readingTimeMinutes', '-publishedDate'],
+      sort: ['-engagementScore', '-publishedDate', '-id'],
       limit: 4,
     })
 
@@ -283,6 +298,9 @@ export async function getStoriesList(args: {
           slug: doc.slug,
           image: hero?.url || '',
           readTime: readTimeStr,
+          viewCount: typeof doc.viewCount === 'number' ? Math.max(0, doc.viewCount) : 0,
+          commentCount: typeof doc.commentCount === 'number' ? Math.max(0, doc.commentCount) : 0,
+          engagementScore: typeof doc.engagementScore === 'number' ? Math.max(0, doc.engagementScore) : 0,
         }
       })
 

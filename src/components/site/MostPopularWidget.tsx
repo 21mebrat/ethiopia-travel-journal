@@ -65,11 +65,15 @@ export default function MostPopularWidget({
                 <h4 className="font-serif text-xs sm:text-sm font-semibold text-foreground line-clamp-2 leading-snug group-hover:underline transition-colors">
                   {item.title}
                 </h4>
-                {item.readTime && (
-                  <span className="text-[11px] text-muted-foreground mt-0.5 block">
-                    {item.readTime}
-                  </span>
-                )}
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                  {item.readTime && <span>{item.readTime}</span>}
+                  {typeof item.viewCount === 'number' && item.viewCount > 0 && (
+                    <>
+                      <span aria-hidden="true">•</span>
+                      <span>{item.viewCount.toLocaleString()} {isAmharic ? 'ዕይታዎች' : 'views'}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </Link>
           </li>

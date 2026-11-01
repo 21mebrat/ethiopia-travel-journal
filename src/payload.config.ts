@@ -16,6 +16,7 @@ import { VisualMediaLayout } from './blocks/VisualMediaLayout'
 import { en } from '@payloadcms/translations/languages/en'
 import { am } from './i18n/am'
 import { Comments } from './collections/Comments'
+import { ArticleViews } from './collections/ArticleViews'
 import { Advertisements } from './collections/Advertisements'
 import { Subscribers } from './collections/Subscribers'
 import { NewsletterBroadcasts } from './collections/NewsletterBroadcasts'
@@ -29,6 +30,11 @@ import {
   newsletterUnsubscribePostHandler,
   newsletterUnsubscribeGetHandler,
 } from './endpoints/newsletterUnsubscribe'
+import { storyTrackViewHandler } from './endpoints/storyTrackView'
+import {
+  storyCommentsGetHandler,
+  storyCommentsPostHandler,
+} from './endpoints/storyComments'
 import { getEmailAdapter } from './lib/email/adapter'
 
 const filename = fileURLToPath(import.meta.url)
@@ -151,6 +157,7 @@ export default buildConfig({
     Destinations,
     Articles,
     Comments,
+    ArticleViews,
     Advertisements,
     Subscribers,
     NewsletterBroadcasts,
@@ -306,6 +313,21 @@ export default buildConfig({
       path: '/newsletter/unsubscribe',
       method: 'get',
       handler: newsletterUnsubscribeGetHandler,
+    },
+    {
+      path: '/stories/track-view',
+      method: 'post',
+      handler: storyTrackViewHandler,
+    },
+    {
+      path: '/stories/comments',
+      method: 'get',
+      handler: storyCommentsGetHandler,
+    },
+    {
+      path: '/stories/comments',
+      method: 'post',
+      handler: storyCommentsPostHandler,
     },
   ],
   db: mongooseAdapter({

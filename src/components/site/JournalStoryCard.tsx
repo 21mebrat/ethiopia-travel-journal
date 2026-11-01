@@ -3,6 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Eye, MessageSquare, TrendingUp } from 'lucide-react'
 import BookmarkButton from '@/components/site/BookmarkButton'
 import type { StoryItem } from '@/lib/site/stories'
 
@@ -119,6 +120,35 @@ export default function JournalStoryCard({
               </>
             )}
           </div>
+        </div>
+
+        {/* Engagement & Metric Counters */}
+        <div className="mt-2.5 pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span
+              className="flex items-center gap-1"
+              title={isAmharic ? 'የዕይታዎች ብዛት' : 'Views'}
+            >
+              <Eye size={12} className="opacity-75" />
+              <span>{story.viewCount.toLocaleString()}</span>
+            </span>
+
+            <span
+              className="flex items-center gap-1"
+              title={isAmharic ? 'የአስተያየቶች ብዛት' : 'Approved comments'}
+            >
+              <MessageSquare size={12} className="opacity-75" />
+              <span>{story.commentCount}</span>
+            </span>
+          </div>
+
+          <span
+            className="flex items-center gap-1 font-medium text-primary/90"
+            title={isAmharic ? 'የተሳትፎ ነጥብ' : 'Engagement score'}
+          >
+            <TrendingUp size={11} />
+            <span>{story.engagementScore.toFixed(1)}</span>
+          </span>
         </div>
       </div>
     </article>

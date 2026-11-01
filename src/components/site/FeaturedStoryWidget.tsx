@@ -149,6 +149,12 @@ export default function FeaturedStoryWidget({
                 <span>{story.readTime}</span>
               </>
             )}
+            {story.viewCount > 0 && (
+              <>
+                <span>•</span>
+                <span>{story.viewCount.toLocaleString()} {isAmharic ? 'ዕይታዎች' : 'views'}</span>
+              </>
+            )}
           </div>
         </div>
       </article>

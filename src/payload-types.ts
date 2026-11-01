@@ -73,6 +73,7 @@ export interface Config {
     destinations: Destination;
     articles: Article;
     comments: Comment;
+    'article-views': ArticleView;
     title: Title;
     subscribers: Subscriber;
     'newsletter-broadcasts': NewsletterBroadcast;
@@ -90,6 +91,7 @@ export interface Config {
     destinations: DestinationsSelect<false> | DestinationsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     comments: CommentsSelect<false> | CommentsSelect<true>;
+    'article-views': ArticleViewsSelect<false> | ArticleViewsSelect<true>;
     title: TitleSelect<false> | TitleSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'newsletter-broadcasts': NewsletterBroadcastsSelect<false> | NewsletterBroadcastsSelect<true>;
@@ -465,22 +467,52 @@ export interface Article {
    * Timestamp when automated newsletter was first dispatched.
    */
   newsletterPublishedAt?: string | null;
+  /**
+   * Accurate, deduplicated total public article views.
+   */
+  viewCount?: number | null;
+  /**
+   * Count of approved, publicly visible comments on this article.
+   */
+  commentCount?: number | null;
+  /**
+   * Algorithmic engagement score calculated from views and approved comments.
+   */
+  engagementScore?: number | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Manage comments from users
+ * Manage moderated reader comments on published travel stories.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "comments".
  */
 export interface Comment {
   id: string;
+  /**
+   * The published article this comment belongs to. Required for new public comments.
+   */
+  article?: (string | null) | Article;
+  /**
+   * Only approved comments are publicly displayed on the story.
+   */
+  status: 'pending' | 'approved' | 'rejected';
   full_name?: string | null;
+  /**
+   * Private email for moderation contact. Never shown publicly to readers.
+   */
   email?: string | null;
   phone?: string | null;
-  body: {
+  /**
+   * Sanitized plain text comment (max 2,000 characters).
+   */
+  commentText?: string | null;
+  /**
+   * Lexical rich text format automatically synchronized with comment content.
+   */
+  body?: {
     root: {
       type: string;
       children: {
@@ -494,7 +526,33 @@ export interface Comment {
       version: number;
     };
     [k: string]: unknown;
-  };
+  } | null;
+  moderatedBy?: (string | null) | User;
+  moderatedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Internal atomic deduplication records for article views
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-views".
+ */
+export interface ArticleView {
+  id: string;
+  /**
+   * The published article that was viewed.
+   */
+  article: string | Article;
+  /**
+   * Cryptographic pseudonymous hash of the visitor session.
+   */
+  visitorHash: string;
+  dayBucket: number;
+  /**
+   * Unique compound deduplication key: ${articleId}_${visitorHash}_${dayBucket}
+   */
+  viewKey: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -708,6 +766,10 @@ export interface PayloadLockedDocument {
         value: string | Comment;
       } | null)
     | ({
+        relationTo: 'article-views';
+        value: string | ArticleView;
+      } | null)
+    | ({
         relationTo: 'title';
         value: string | Title;
       } | null)
@@ -919,6 +981,9 @@ export interface ArticlesSelect<T extends boolean = true> {
         ogImage?: T;
       };
   newsletterPublishedAt?: T;
+  viewCount?: T;
+  commentCount?: T;
+  engagementScore?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -928,10 +993,27 @@ export interface ArticlesSelect<T extends boolean = true> {
  * via the `definition` "comments_select".
  */
 export interface CommentsSelect<T extends boolean = true> {
+  article?: T;
+  status?: T;
   full_name?: T;
   email?: T;
   phone?: T;
+  commentText?: T;
   body?: T;
+  moderatedBy?: T;
+  moderatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-views_select".
+ */
+export interface ArticleViewsSelect<T extends boolean = true> {
+  article?: T;
+  visitorHash?: T;
+  dayBucket?: T;
+  viewKey?: T;
   updatedAt?: T;
   createdAt?: T;
 }
