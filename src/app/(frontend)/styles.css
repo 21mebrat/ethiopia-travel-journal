@@ -54,8 +54,8 @@
     --cat-brown: oklch(0.62 0.08 55);
     --cat-purple: oklch(0.62 0.14 300);
 
-    --site-max: 96rem;
-    --site-gutter: 1.25rem;
+    --site-max: 100rem;
+    --site-gutter: 1rem;
   }
 
   .dark,
@@ -96,13 +96,13 @@
 
   @media (min-width: 640px) {
     :root {
-      --site-gutter: 2rem;
+      --site-gutter: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     :root {
-      --site-gutter: clamp(2.75rem, 5vw, 5rem);
+      --site-gutter: clamp(1.25rem, 1.8vw, 2rem);
     }
   }
 }

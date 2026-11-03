@@ -161,7 +161,7 @@ export default async function StoryDetailPage({
 
         {/* Hero Overlay Content (Photographic contrast: white text on dark scrim) */}
         <div className="container-site relative z-10 text-white pb-8 sm:pb-10">
-          <div className="max-w-4xl">
+          <div className="max-w-5xl xl:max-w-6xl">
             {/* Category Tag */}
             {story.category.name && (
               <div className="mb-3">
@@ -265,7 +265,7 @@ export default async function StoryDetailPage({
 
       {/* 4. Main Body Container (3 Columns: Dynamic TOC | Article Content | Sidebar) */}
       <div className="container-site mt-10 sm:mt-14">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+        <div className="flex flex-col lg:flex-row justify-between gap-8 lg:gap-10 items-start w-full">
           {/* Left Column: Dynamic Sticky Table of Contents (Only rendered if headings exist) */}
           {toc.length > 0 && (
             <aside className="hidden xl:block w-48 shrink-0 sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -274,7 +274,7 @@ export default async function StoryDetailPage({
           )}
 
           {/* Center Column: Actual CMS Article Content */}
-          <main className="flex-1 min-w-0 max-w-3xl space-y-8 bg-card text-card-foreground p-6 sm:p-10 rounded-xs shadow-xs border border-border">
+          <main className="flex-1 min-w-0 max-w-4xl xl:max-w-5xl space-y-8 bg-card text-card-foreground p-6 sm:p-10 rounded-xs shadow-xs border border-border">
             {/* Lead Excerpt Callout */}
             {story.excerpt && (
               <div className="pl-5 border-l-4 border-foreground/70 py-1">
@@ -307,7 +307,7 @@ export default async function StoryDetailPage({
           {/* Right Column: Sidebar (Sticky on lg screens, matching Left Column) */}
           <aside
             aria-label="Article Sidebar"
-            className="w-full lg:w-[320px] xl:w-[360px] shrink-0 space-y-8 lg:sticky lg:top-24 self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-contain"
+            className="w-full lg:w-[320px] xl:w-[360px] lg:ml-auto shrink-0 space-y-8 lg:sticky lg:top-24 self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-contain"
           >
             {/* Primary Real Advertisement */}
             {primaryAd && <AdvertisementCard ad={primaryAd} variant="sidebar" />}

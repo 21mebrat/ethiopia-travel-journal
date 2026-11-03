@@ -130,7 +130,8 @@ export default async function DestinationDetailPage({ params, searchParams }: Pr
           </div>
 
           {/* Hero Title & Badges Overlay */}
-          <div className="relative z-10 container-site py-10 md:py-16 max-w-4xl">
+          <div className="relative z-10 container-site py-10 md:py-16">
+            <div className="max-w-5xl">
             {/* Category Badge */}
             {destination.categoryName && (
               <div className="flex items-center gap-2 mb-3">
@@ -187,7 +188,8 @@ export default async function DestinationDetailPage({ params, searchParams }: Pr
                 )}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
       ) : (
         /* Neutral Empty State when heroImage is absent */
         <>
