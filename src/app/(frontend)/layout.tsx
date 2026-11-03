@@ -45,8 +45,35 @@ const notoSerifEthiopic = Noto_Serif_Ethiopic({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'),
   description: 'Ethiopia Travel Journal & Tour Blog - Cultural Heritage and Travel Stories.',
   title: 'Ethiopia Travel Journal',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: ['/favicon.ico'],
+  },
+  manifest: '/site.webmanifest',
+  openGraph: {
+    title: 'Ethiopia Travel Journal',
+    description: 'Ethiopia Travel Journal & Tour Blog - Cultural Heritage and Travel Stories.',
+    siteName: 'Ethiopia Travel Journal',
+    images: [
+      {
+        url: '/assets/ethiopia-tour-logo.png',
+        width: 393,
+        height: 461,
+        alt: 'Ethiopia Travel Journal Logo',
+      },
+    ],
+  },
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

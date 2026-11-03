@@ -106,6 +106,34 @@ export default buildConfig({
       prefillOnly: false,
     } : false,
     autoRefresh: true,
+    meta: {
+      titleSuffix: ' | Ethiopia Travel Journal Admin',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/x-icon',
+          url: '/favicon.ico',
+        },
+        {
+          rel: 'icon',
+          type: 'image/png',
+          sizes: '32x32',
+          url: '/favicon-32x32.png',
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          url: '/apple-touch-icon.png',
+        },
+      ],
+      openGraph: {
+        images: [
+          {
+            url: '/assets/ethiopia-tour-logo.png',
+          },
+        ],
+      },
+    },
     components: {
       // before login , compoent render above the login form
       beforeLogin: [
