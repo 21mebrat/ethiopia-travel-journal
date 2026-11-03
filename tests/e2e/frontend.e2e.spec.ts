@@ -60,4 +60,22 @@ test.describe('Public homepage', () => {
     )
     expect(overflow).toBeLessThanOrEqual(0)
   })
+
+  test('public pages and mobile navigation do not contain admin panel links', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('http://localhost:3000/')
+
+    // Open mobile navigation menu
+    const menuBtn = page.locator('.site-tab--button')
+    await menuBtn.click()
+    await expect(page.getByRole('dialog', { name: 'More' })).toBeVisible()
+
+    // Verify no admin link inside mobile sheet/drawer
+    await expect(page.locator('.site-sheet a[href*="/admin"]')).toHaveCount(0)
+    await expect(page.locator('.site-sheet').getByText(/admin/i)).toHaveCount(0)
+
+    // Close menu and check site footer
+    await page.keyboard.press('Escape')
+    await expect(page.locator('footer.site-footer a[href*="/admin"]')).toHaveCount(0)
+  })
 })

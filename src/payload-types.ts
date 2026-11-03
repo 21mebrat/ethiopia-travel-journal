@@ -211,6 +211,15 @@ export interface Media {
    * Optional caption shown beneath the image in blog posts.
    */
   caption?: string | null;
+  /**
+   * Public ID assigned by Cloudinary CDN.
+   */
+  cloudinaryPublicId?: string | null;
+  /**
+   * Direct secure URL to Cloudinary CDN.
+   */
+  cloudinaryUrl?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -868,6 +877,9 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  cloudinaryPublicId?: T;
+  cloudinaryUrl?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

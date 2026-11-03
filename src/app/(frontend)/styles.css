@@ -1521,20 +1521,11 @@ body {
 .site-sheet__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 1rem;
   margin-top: 1.4rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
-}
-
-.site-sheet__admin {
-  color: var(--muted-foreground);
-  font-size: 0.68rem;
-  letter-spacing: 0.13em;
-  text-decoration: underline;
-  text-transform: uppercase;
-  text-underline-offset: 0.22em;
 }
 
 /* --------------------------------------------------------------------------

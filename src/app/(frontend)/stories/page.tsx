@@ -8,6 +8,7 @@ import FeaturedStoryWidget from '@/components/site/FeaturedStoryWidget'
 import MostPopularWidget from '@/components/site/MostPopularWidget'
 import AdvertisementCard from '@/components/site/AdvertisementCard'
 import NewsletterWidget from '@/components/site/NewsletterWidget'
+import StoriesPagination from '@/components/site/StoriesPagination'
 import { getStoriesList, getCategoriesList } from '@/lib/site/stories'
 import { getAdvertisements } from '@/lib/site/advertisements'
 import { getSiteLocale, type SiteLocale } from '@/lib/site/locale'
@@ -22,10 +23,18 @@ type StoriesPageProps = {
 }
 
 export async function generateMetadata({ searchParams }: StoriesPageProps): Promise<Metadata> {
-  const { locale: localeParam } = await searchParams
+  const { locale: localeParam, page: pageParam } = await searchParams
   const locale = await getSiteLocale(localeParam)
+  const siteUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+
+  const queryParams = new URLSearchParams()
+  if (locale === 'am') queryParams.set('locale', 'am')
+  if (pageParam && parseInt(pageParam, 10) > 1) queryParams.set('page', pageParam)
+  const qs = queryParams.toString()
+  const canonicalUrl = `${siteUrl}/stories${qs ? `?${qs}` : ''}`
 
   return {
+    metadataBase: new URL(siteUrl),
     title:
       locale === 'am'
         ? 'የጉዞ ታሪኮች — የኢትዮጵያ ጉዞ ማስታወሻ'
@@ -34,6 +43,13 @@ export async function generateMetadata({ searchParams }: StoriesPageProps): Prom
       locale === 'am'
         ? 'ከመላው ኢትዮጵያ የተገኙ አነሳሽ ጉዞዎች፣ የባሕል ግንዛቤዎች እና የማይረሱ ቦታዎች።'
         : 'Inspiring journeys, cultural insights, practical guides, and unforgettable places from across the Land of Origins.',
+    alternates: {
+      canonical: canonicalUrl,
+      languages: {
+        en: `${siteUrl}/stories`,
+        am: `${siteUrl}/stories?locale=am`,
+      },
+    },
   }
 }
 
@@ -41,12 +57,13 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
   const params = await searchParams
   const locale = (await getSiteLocale(params.locale)) as SiteLocale
   const { category = 'all', sort = 'latest', page: pageParam = '1' } = params
-  const currentPage = Math.max(1, parseInt(pageParam, 10) || 1)
+  const rawPage = parseInt(pageParam, 10)
+  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
 
   const [categories, { stories, featured, popular, totalPages, page }, ads] =
     await Promise.all([
       getCategoriesList(locale),
-      getStoriesList({ locale, category, sort, page: currentPage, limit: 12 }),
+      getStoriesList({ locale, category, sort, page: currentPage, limit: 9 }),
       getAdvertisements(locale),
     ])
 
@@ -135,36 +152,14 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
                   </div>
                 )}
 
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <nav
-                    aria-label={isAmharic ? 'የገጽ ማውጫ' : 'Pagination'}
-                    className="flex items-center justify-center gap-2 pt-8 border-t border-border"
-                  >
-                    {Array.from({ length: totalPages }).map((_, i) => {
-                      const pageNum = i + 1
-                      const isActive = pageNum === page
-                      const pageParams = new URLSearchParams()
-                      if (category && category !== 'all') pageParams.set('category', category)
-                      if (sort && sort !== 'latest') pageParams.set('sort', sort)
-                      pageParams.set('page', String(pageNum))
-
-                      return (
-                        <Link
-                          key={pageNum}
-                          href={`/stories?${pageParams.toString()}`}
-                          className={`w-9 h-9 rounded-xs text-xs font-semibold flex items-center justify-center transition-colors ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground shadow-xs'
-                              : 'bg-card text-card-foreground border border-border hover:bg-muted'
-                          }`}
-                        >
-                          {pageNum}
-                        </Link>
-                      )
-                    })}
-                  </nav>
-                )}
+                {/* Pagination Controls (Matching Destinations Pagination) */}
+                <Suspense fallback={null}>
+                  <StoriesPagination
+                    page={page}
+                    totalPages={totalPages}
+                    locale={locale}
+                  />
+                </Suspense>
               </div>
             ) : (
               /* Honest empty state */

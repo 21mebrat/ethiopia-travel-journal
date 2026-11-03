@@ -73,6 +73,7 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
     page,
   }) => {
     await page.goto('http://127.0.0.1:3000/stories', { waitUntil: 'domcontentloaded' })
+    await page.locator('article.group').first().waitFor({ state: 'visible' })
 
     // Apply dark theme attribute
     await page.evaluate(() => {
@@ -80,11 +81,15 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
       document.documentElement.classList.add('dark')
     })
 
-    // Verify card background now has dark luminance (no white islands)
-    const darkCardBg = await page.locator('article.group').first().evaluate((el) => {
-      return window.getComputedStyle(el).backgroundColor
-    })
-    expect(extractLightness(darkCardBg)).toBeLessThanOrEqual(35)
+    // Poll for card background to transition to dark theme (accounting for CSS transitions)
+    await expect
+      .poll(async () => {
+        const bg = await page.locator('article.group').first().evaluate((el) => {
+          return window.getComputedStyle(el).backgroundColor
+        })
+        return extractLightness(bg)
+      })
+      .toBeLessThanOrEqual(35)
 
     // Verify card text is light
     const darkTextColor = await page.locator('article.group h3 a').first().evaluate((el) => {
@@ -99,10 +104,14 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
       document.documentElement.classList.add('dark')
     })
 
-    const darkDetailBg = await page.locator('article.story-detail-page').first().evaluate((el) => {
-      return window.getComputedStyle(el).backgroundColor
-    })
-    expect(extractLightness(darkDetailBg)).toBeLessThanOrEqual(35)
+    await expect
+      .poll(async () => {
+        const bg = await page.locator('article.story-detail-page').first().evaluate((el) => {
+          return window.getComputedStyle(el).backgroundColor
+        })
+        return extractLightness(bg)
+      })
+      .toBeLessThanOrEqual(35)
   })
 
   // --------------------------------------------------------------------------
@@ -222,7 +231,7 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
     await expect(bookmarkBtn).toHaveAttribute('aria-pressed', 'true')
 
     // Reload page and verify bookmark state persisted
-    await page.reload()
+    await page.reload({ waitUntil: 'domcontentloaded' })
     const reloadedBtn = page.locator('button.story-card__bookmark').first()
     await expect(reloadedBtn).toHaveAttribute('aria-pressed', 'true')
 
@@ -265,6 +274,33 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
   test('newsletter widget allows subscribing, validates email, and handles duplicates', async ({
     page,
   }) => {
+    // Mock subscription network responses to isolate UI testing from external SMTP firewall connectivity
+    let callCount = 0
+    await page.route('**/api/newsletter/subscribe', async (route) => {
+      callCount++
+      if (callCount === 1) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            message:
+              'A confirmation email has been sent. Please check your inbox and click the verification link to activate your subscription.',
+          }),
+        })
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            alreadySubscribed: true,
+            message: 'You are already subscribed to our newsletter.',
+          }),
+        })
+      }
+    })
+
     await page.goto('http://127.0.0.1:3000/stories', { waitUntil: 'domcontentloaded' })
 
     const newsletter = page.locator('aside[aria-label="Join Our Newsletter"]')
@@ -279,13 +315,14 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
 
     // 1. Submit with a unique test email
     const uniqueEmail = `subscriber-${Date.now()}@example.com`
-    await emailInput.fill(uniqueEmail)
+    await emailInput.click()
+    await emailInput.pressSequentially(uniqueEmail, { delay: 10 })
     await submitBtn.click()
 
     // Double opt-in confirmation feedback message should appear
     await expect(
       newsletter.locator('text=/confirmation email|thank you/i'),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 15000 })
 
     // 2. Click "Subscribe another email" to reset form
     const subscribeAnotherBtn = newsletter.getByRole('button', {
@@ -298,12 +335,13 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
     await expect(emailInput).toBeVisible()
 
     // 3. Submit duplicate email - should indicate already pending or subscribed
-    await emailInput.fill(uniqueEmail)
+    await emailInput.click()
+    await emailInput.pressSequentially(uniqueEmail, { delay: 10 })
     await submitBtn.click()
 
     await expect(
       newsletter.locator('text=/already subscribed|confirmation email/i'),
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 15000 })
   })
 
   // --------------------------------------------------------------------------
@@ -337,5 +375,80 @@ test.describe('Stories Listing & Detail Pages - Theming & Data Integrity', () =>
     await page.goto('http://127.0.0.1:3000/stories?locale=am', { waitUntil: 'domcontentloaded' })
     await expect(page).toHaveTitle(/የጉዞ ታሪኮች/)
     await expect(page.locator('h1').first()).toContainText('ከኢትዮጵያ የጉዞ ታሪኮች')
+  })
+
+  // --------------------------------------------------------------------------
+  // PART 10: Stories Pagination (Matching Destinations Pagination)
+  // --------------------------------------------------------------------------
+  test('stories listing renders pagination with Previous/Next buttons and supports page navigation', async ({
+    page,
+  }) => {
+    await page.goto('http://127.0.0.1:3000/stories', { waitUntil: 'domcontentloaded' })
+
+    const paginationNav = page.locator('nav[aria-label="Stories pagination"]')
+    await expect(paginationNav).toBeVisible()
+
+    // Page 1 should be active
+    const page1Btn = paginationNav.locator('a[aria-current="page"]')
+    await expect(page1Btn).toHaveText('1')
+
+    // On page 1, Previous button should be disabled
+    const disabledPrev = paginationNav.locator('span[aria-disabled="true"]').first()
+    await expect(disabledPrev).toBeVisible()
+    await expect(disabledPrev).toContainText('Previous')
+
+    // Next button should be an active link
+    const nextBtn = paginationNav.locator('a[aria-label="Next page"]')
+    await expect(nextBtn).toBeVisible()
+
+    // Navigate to page 2 via page 2 link or Next button
+    await nextBtn.click()
+    await expect(page).toHaveURL(/page=2/)
+
+    // Page 2 should now be active
+    const activePage2 = page.locator('nav[aria-label="Stories pagination"] a[aria-current="page"]')
+    await expect(activePage2).toHaveText('2')
+
+    // On page 2, Previous button should now be an active link
+    const activePrev = page.locator('nav[aria-label="Stories pagination"] a[aria-label="Previous page"]')
+    await expect(activePrev).toBeVisible()
+  })
+
+  test('stories pagination preserves Amharic locale and displays localized labels', async ({
+    page,
+  }) => {
+    await page.goto('http://127.0.0.1:3000/stories?locale=am', { waitUntil: 'domcontentloaded' })
+
+    const paginationNav = page.locator('nav[aria-label="የታሪኮች ገጽ አሰሳ"]')
+    await expect(paginationNav).toBeVisible()
+
+    // Disabled previous on page 1 has Amharic label
+    const disabledPrev = paginationNav.locator('span[aria-disabled="true"]').first()
+    await expect(disabledPrev).toContainText('ቀዳሚ')
+
+    // Next button has Amharic label
+    const nextBtn = paginationNav.locator('a[aria-label="ቀጣይ ገጽ"]')
+    await expect(nextBtn).toBeVisible()
+    await expect(nextBtn).toContainText('ቀጣይ')
+
+    // Clicking next preserves locale=am
+    await nextBtn.click()
+    await expect(page).toHaveURL(/locale=am/)
+    await expect(page).toHaveURL(/page=2/)
+  })
+
+  test('stories pagination at 320px viewport fits cleanly without horizontal overflow', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 600 })
+    await page.goto('http://127.0.0.1:3000/stories', { waitUntil: 'domcontentloaded' })
+
+    const paginationNav = page.locator('nav[aria-label="Stories pagination"]')
+    await expect(paginationNav).toBeVisible()
+
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    )
+    expect(overflow).toBeLessThanOrEqual(0)
   })
 })

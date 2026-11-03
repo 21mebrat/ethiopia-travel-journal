@@ -36,6 +36,11 @@ import {
   storyCommentsPostHandler,
 } from './endpoints/storyComments'
 import { getEmailAdapter } from './lib/email/adapter'
+import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
+import {
+  createCloudinaryStorageAdapter,
+  isCloudinaryConfigured,
+} from './lib/media/cloudinary'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -334,5 +339,16 @@ export default buildConfig({
     url: process.env.DATABASE_URL || '',
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    cloudStoragePlugin({
+      enabled: isCloudinaryConfigured(),
+      collections: {
+        media: {
+          adapter: createCloudinaryStorageAdapter(),
+          disableLocalStorage: true,
+          disablePayloadAccessControl: true,
+        },
+      },
+    }),
+  ],
 })

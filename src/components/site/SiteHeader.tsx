@@ -41,7 +41,6 @@ const COPY = {
     menu: 'Open site menu',
     openSearch: 'Open search',
     language: 'Language',
-    admin: 'Admin panel',
     skip: 'Skip to content',
     tagline: ['Travel', 'Culture', 'People', 'Places'],
     brandSub: 'Travel Journal',
@@ -63,7 +62,6 @@ const COPY = {
     menu: 'የጣቢያ ምናሌ ክፈት',
     openSearch: 'ፍለጋ ክፈት',
     language: 'ቋንቋ',
-    admin: 'የአስተዳዳሪ ክፍል',
     skip: 'ወደ ዋና ይዘት ዝለል',
     tagline: ['ጉዞ', 'ባሕል', 'ሰዎች', 'ቦታዎች'],
     brandSub: 'የጉዞ ማስታወሻ',
@@ -93,6 +91,19 @@ export default function SiteHeader({ locale: initialLocale, dateLabel, topics }:
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchValue, setSearchValue] = useState(query)
+  const [prevQuery, setPrevQuery] = useState(query)
+  const [prevPathname, setPrevPathname] = useState(pathname)
+
+  if (prevQuery !== query) {
+    setPrevQuery(query)
+    setSearchValue(query)
+  }
+
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname)
+    setMenuOpen(false)
+    setSearchOpen(false)
+  }
 
   const menuRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -104,20 +115,12 @@ export default function SiteHeader({ locale: initialLocale, dateLabel, topics }:
     setSearchOpen(false)
   }, [])
 
-  useEffect(() => {
-    setSearchValue(query)
-  }, [query])
-
   // Keep the document language and the locale cookie aligned with a deep link
   // such as ?locale=am, including client-side navigations.
   useEffect(() => {
     document.documentElement.lang = locale
     if (urlLocale === 'am' || urlLocale === 'en') rememberLocale(locale)
   }, [locale, urlLocale])
-
-  useEffect(() => {
-    closeDialogs()
-  }, [pathname, closeDialogs])
 
   useEffect(() => {
     const dialog = menuOpen ? menuRef.current : searchOpen ? searchRef.current : null
@@ -549,9 +552,6 @@ export default function SiteHeader({ locale: initialLocale, dateLabel, topics }:
 
             <div className="site-sheet__footer">
               {languageSwitch}
-              <Link href="/admin" className="site-sheet__admin">
-                {copy.admin}
-              </Link>
             </div>
           </div>
 

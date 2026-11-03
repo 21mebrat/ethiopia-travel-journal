@@ -57,6 +57,30 @@ export const Media: CollectionConfig = {
         },
       },
     },
+    {
+      name: 'cloudinaryPublicId',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        hidden: true,
+        description: {
+          en: 'Public ID assigned by Cloudinary CDN.',
+          am: 'በክላውዲናሪ ሲዲኤን የተሰጠ መለያ።',
+        },
+      },
+    },
+    {
+      name: 'cloudinaryUrl',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        hidden: true,
+        description: {
+          en: 'Direct secure URL to Cloudinary CDN.',
+          am: 'የክላውዲናሪ ሲዲኤን ቀጥተኛ የፋይል አድራሻ።',
+        },
+      },
+    },
   ],
   upload: true,
 }
