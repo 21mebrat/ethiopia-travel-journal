@@ -69,6 +69,15 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    categories: Category;
+    destinations: Destination;
+    articles: Article;
+    comments: Comment;
+    'article-views': ArticleView;
+    title: Title;
+    subscribers: Subscriber;
+    'newsletter-broadcasts': NewsletterBroadcast;
+    'newsletter-deliveries': NewsletterDelivery;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +87,15 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    destinations: DestinationsSelect<false> | DestinationsSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    comments: CommentsSelect<false> | CommentsSelect<true>;
+    'article-views': ArticleViewsSelect<false> | ArticleViewsSelect<true>;
+    title: TitleSelect<false> | TitleSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
+    'newsletter-broadcasts': NewsletterBroadcastsSelect<false> | NewsletterBroadcastsSelect<true>;
+    'newsletter-deliveries': NewsletterDeliveriesSelect<false> | NewsletterDeliveriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -118,13 +136,47 @@ export interface UserAuthOperations {
   };
 }
 /**
+ * Who can log in, write articles, and manage the blog?
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
   id: string;
+  /**
+   * The author's given name.
+   */
+  firstName: string;
+  /**
+   * The author's father or family name.
+   */
+  lastName: string;
+  /**
+   * Public pen name shown on blog post bylines and author profile cards. Defaults to First + Last name.
+   */
+  displayName?: string | null;
+  /**
+   * Author photo shown next to articles (square 1:1 aspect ratio recommended).
+   */
+  avatar?: (string | null) | Media;
+  /**
+   * Short author introduction. Supports separate English and Amharic translations.
+   */
+  bio?: string | null;
+  /**
+   * Controls editorial access permissions. Only admins can modify this.
+   */
+  role: 'admin' | 'editor' | 'author';
+  /**
+   * The user's preferred language for the blog interface, notifications, and communication.
+   */
+  preferredLanguage: 'en' | 'am';
   updatedAt: string;
   createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+  hasAPIKey?: boolean | null;
   email: string;
   resetPasswordToken?: string | null;
   resetPasswordExpiration?: string | null;
@@ -144,12 +196,30 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Upload and manage blog photos, gallery images, and travel assets.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
   id: string;
+  /**
+   * Important for SEO and screen readers describing the image.
+   */
   alt: string;
+  /**
+   * Optional caption shown beneath the image in blog posts.
+   */
+  caption?: string | null;
+  /**
+   * Public ID assigned by Cloudinary CDN.
+   */
+  cloudinaryPublicId?: string | null;
+  /**
+   * Direct secure URL to Cloudinary CDN.
+   */
+  cloudinaryUrl?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -161,6 +231,500 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * How articles are grouped, such as Culture or History.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  /**
+   * The public title of this category shown on article chips and filter menus.
+   */
+  name: string;
+  /**
+   * URL-friendly identifier. Auto-generated from name if left empty.
+   */
+  slug: string;
+  /**
+   * Explains what articles fall into this category. Used on category archive headers.
+   */
+  description?: string | null;
+  /**
+   * Color used for category badges on article cards and filter tabs.
+   */
+  color?: ('amber' | 'emerald' | 'crimson' | 'blue' | 'brown' | 'purple') | null;
+  /**
+   * When checked, this category appears in top navigation chips and homepage pills.
+   */
+  featured?: boolean | null;
+  /**
+   * Optional icon or graphic displayed next to category title.
+   */
+  icon?: (string | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Places such as Lalibela, Gondar, and the Simien Mountains.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations".
+ */
+export interface Destination {
+  id: string;
+  /**
+   * The primary headline of the travel destination.
+   */
+  title: string;
+  /**
+   * URL-friendly slug. Auto-generated from title if left empty.
+   */
+  slug: string;
+  /**
+   * Administrative region or chartered city where this destination is located.
+   */
+  region:
+    | 'amhara'
+    | 'oromia'
+    | 'tigray'
+    | 'afar'
+    | 'sidama'
+    | 'southern_ethiopia'
+    | 'central_ethiopia'
+    | 'south_west_ethiopia'
+    | 'benishangul_gumuz'
+    | 'gambella'
+    | 'harari'
+    | 'somali'
+    | 'addis_ababa'
+    | 'dire_dawa';
+  /**
+   * When checked, this destination appears in the top hero slider and curated cards.
+   */
+  featured?: boolean | null;
+  /**
+   * Primary category used for top filter tabs.
+   */
+  category?: ('historic_sites' | 'natural_wonders' | 'cities_towns' | 'cultural_experiences' | 'wildlife_parks') | null;
+  /**
+   * Descriptive badges rendered on destination cards.
+   */
+  tags?: string | null;
+  /**
+   * Wide banner photograph (16:9 ratio recommended) shown at the top of the guide.
+   */
+  heroImage: string | Media;
+  /**
+   * Short introductory summary for destination cards and Google search previews.
+   */
+  overview: string;
+  /**
+   * Comprehensive editorial guide, history, and travel advice for this destination.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  travelInfo?: {
+    /**
+     * Optimal weather window for hiking or sightseeing.
+     */
+    bestTimeToVisit?: string | null;
+    /**
+     * Elevation in meters above sea level. Important for acclimatization advice.
+     */
+    altitudeMeters?: number | null;
+    /**
+     * Check if this destination is officially registered on the UNESCO World Heritage list.
+     */
+    isUnescoSite?: boolean | null;
+  };
+  coordinates?: {
+    latitude?: number | null;
+    longitude?: number | null;
+  };
+  /**
+   * Curated photo collection showcasing landscapes, monuments, and cultural scenes.
+   */
+  gallery?:
+    | {
+        image: string | Media;
+        caption?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  quickInfo?: {
+    mainAttractions?: string | null;
+    idealFor?: string | null;
+    visitDuration?: string | null;
+  };
+  attractions?:
+    | {
+        name: string;
+        description?: string | null;
+        image?: (string | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  recommendedAccommodation?: {
+    name?: string | null;
+    rating?: number | null;
+    reviewCount?: number | null;
+    category?: string | null;
+    description?: string | null;
+    image?: (string | null) | Media;
+    link?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Travel stories, guides, and editorial content.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: string;
+  /**
+   * Catchy and descriptive headline for this travel story.
+   */
+  title: string;
+  /**
+   * URL-friendly slug. Auto-generated from title if left empty.
+   */
+  slug: string;
+  /**
+   * High-resolution landscape image (16:9 ratio recommended) shown as the article header.
+   */
+  heroImage: string | Media;
+  /**
+   * Brief teaser shown on blog archive cards and Google search previews.
+   */
+  excerpt: string;
+  /**
+   * Full article body. Supports headings, images, quotes, links, formatted text, and Telegram-style media collages.
+   */
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * The user account credited for writing this article.
+   */
+  author: string | User;
+  /**
+   * Topics related to this article (e.g. Culture, History, Wildlife).
+   */
+  categories?: (string | Category)[] | null;
+  /**
+   * Select the destinations featured in this story.
+   */
+  destinations?: (string | Destination)[] | null;
+  /**
+   * Date and time displayed on the public article byline.
+   */
+  publishedDate?: string | null;
+  /**
+   * Estimated reading time displayed on article cards (e.g. "5 min read").
+   */
+  readingTimeMinutes?: number | null;
+  /**
+   * Check to highlight this article in the top homepage spotlight grid.
+   */
+  featured?: boolean | null;
+  meta?: {
+    /**
+     * Optimal length: 50-60 characters for search engine result pages.
+     */
+    metaTitle?: string | null;
+    /**
+     * Optimal length: 140-160 characters describing the article content.
+     */
+    metaDescription?: string | null;
+    /**
+     * Image displayed when this article is shared on Facebook, Twitter, Telegram, or LinkedIn.
+     */
+    ogImage?: (string | null) | Media;
+  };
+  /**
+   * Timestamp when automated newsletter was first dispatched.
+   */
+  newsletterPublishedAt?: string | null;
+  /**
+   * Accurate, deduplicated total public article views.
+   */
+  viewCount?: number | null;
+  /**
+   * Count of approved, publicly visible comments on this article.
+   */
+  commentCount?: number | null;
+  /**
+   * Algorithmic engagement score calculated from views and approved comments.
+   */
+  engagementScore?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Manage moderated reader comments on published travel stories.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments".
+ */
+export interface Comment {
+  id: string;
+  /**
+   * The published article this comment belongs to. Required for new public comments.
+   */
+  article?: (string | null) | Article;
+  /**
+   * Only approved comments are publicly displayed on the story.
+   */
+  status: 'pending' | 'approved' | 'rejected';
+  full_name?: string | null;
+  /**
+   * Private email for moderation contact. Never shown publicly to readers.
+   */
+  email?: string | null;
+  phone?: string | null;
+  /**
+   * Sanitized plain text comment (max 2,000 characters).
+   */
+  commentText?: string | null;
+  /**
+   * Lexical rich text format automatically synchronized with comment content.
+   */
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  moderatedBy?: (string | null) | User;
+  moderatedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Internal atomic deduplication records for article views
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-views".
+ */
+export interface ArticleView {
+  id: string;
+  /**
+   * The published article that was viewed.
+   */
+  article: string | Article;
+  /**
+   * Cryptographic pseudonymous hash of the visitor session.
+   */
+  visitorHash: string;
+  dayBucket: number;
+  /**
+   * Unique compound deduplication key: ${articleId}_${visitorHash}_${dayBucket}
+   */
+  viewKey: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "title".
+ */
+export interface Title {
+  id: string;
+  /**
+   * Title of the advertisement
+   */
+  title: string;
+  /**
+   * Content of the advertisement
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * URL friendly version of the title
+   */
+  slug: string;
+  /**
+   * Media of the advertisement
+   */
+  heroImage?: (string | null) | Media;
+  /**
+   * Controls whether this advertisement is eligible for display.
+   */
+  status: 'active' | 'inactive';
+  /**
+   * Where this advertisement should be rendered across the site.
+   */
+  placement?: ('all' | 'destination_listing' | 'destination_detail' | 'stories' | 'general') | null;
+  /**
+   * Design layout used to render this advertisement.
+   */
+  variant?: ('standard' | 'lodge' | 'airline') | null;
+  /**
+   * Action label for the link button (defaults to 'Learn More' / 'ይመልከቱ').
+   */
+  ctaText?: string | null;
+  /**
+   * Target URL when the user clicks the ad button.
+   */
+  ctaLink?: string | null;
+  /**
+   * Badge text overlaid on the card (defaults to 'SPONSORED' / 'ስፖንሰር የተደረገ').
+   */
+  sponsorLabel?: string | null;
+  /**
+   * How long this advertisement remains visible before rotating to the next ad. (Default: 10).
+   */
+  durationValue?: number | null;
+  /**
+   * Time unit for display duration (seconds, minutes, hours, days).
+   */
+  durationUnit?: ('seconds' | 'minutes' | 'hours' | 'days') | null;
+  /**
+   * Optional start date. Ad is inactive before this date.
+   */
+  startDate?: string | null;
+  /**
+   * Optional expiration date. Ad is inactive after this date.
+   */
+  endDate?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage email subscribers to the Ethiopia Travel Journal newsletter.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: string;
+  email: string;
+  status: 'pending' | 'subscribed' | 'unsubscribed';
+  locale?: ('en' | 'am') | null;
+  source?: string | null;
+  /**
+   * SHA-256 hash of single-use confirmation token.
+   */
+  confirmationTokenHash?: string | null;
+  /**
+   * Timestamp when confirmation link expires.
+   */
+  confirmationExpiresAt?: string | null;
+  /**
+   * SHA-256 hash of secure unsubscribe token.
+   */
+  unsubscribeTokenHash?: string | null;
+  tokenVersion?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tracks automated article newsletter broadcast events and execution status.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-broadcasts".
+ */
+export interface NewsletterBroadcast {
+  id: string;
+  article: string | Article;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
+  /**
+   * Tracks whether recipient delivery rows have all been created.
+   */
+  fanoutStatus?: ('pending' | 'in_progress' | 'completed') | null;
+  fanoutCompletedAt?: string | null;
+  totalRecipients?: number | null;
+  sentCount?: number | null;
+  failedCount?: number | null;
+  skippedCount?: number | null;
+  enqueuedAt?: string | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Per-recipient delivery state with stable unique keys for at-least-once newsletter reliability.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-deliveries".
+ */
+export interface NewsletterDelivery {
+  id: string;
+  broadcast: string | NewsletterBroadcast;
+  article: string | Article;
+  subscriber: string | Subscriber;
+  recipientEmail: string;
+  /**
+   * Stable uniqueness key (${articleId}_${subscriberId}) preventing duplicate delivery across worker retries.
+   */
+  deliveryKey: string;
+  status: 'pending' | 'sending' | 'sent' | 'failed' | 'skipped';
+  attempts?: number | null;
+  lastError?: string | null;
+  sentAt?: string | null;
+  /**
+   * Identifier of the worker instance currently leasing this delivery.
+   */
+  workerId?: string | null;
+  leaseClaimedAt?: string | null;
+  leaseExpiresAt?: string | null;
+  locale?: ('en' | 'am') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -193,6 +757,42 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'destinations';
+        value: string | Destination;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: string | Article;
+      } | null)
+    | ({
+        relationTo: 'comments';
+        value: string | Comment;
+      } | null)
+    | ({
+        relationTo: 'article-views';
+        value: string | ArticleView;
+      } | null)
+    | ({
+        relationTo: 'title';
+        value: string | Title;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: string | Subscriber;
+      } | null)
+    | ({
+        relationTo: 'newsletter-broadcasts';
+        value: string | NewsletterBroadcast;
+      } | null)
+    | ({
+        relationTo: 'newsletter-deliveries';
+        value: string | NewsletterDelivery;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -241,8 +841,19 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
+  displayName?: T;
+  avatar?: T;
+  bio?: T;
+  role?: T;
+  preferredLanguage?: T;
   updatedAt?: T;
   createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
+  hasAPIKey?: T;
   email?: T;
   resetPasswordToken?: T;
   resetPasswordExpiration?: T;
@@ -265,6 +876,10 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  caption?: T;
+  cloudinaryPublicId?: T;
+  cloudinaryUrl?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -276,6 +891,220 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  color?: T;
+  featured?: T;
+  icon?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "destinations_select".
+ */
+export interface DestinationsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  region?: T;
+  featured?: T;
+  category?: T;
+  tags?: T;
+  heroImage?: T;
+  overview?: T;
+  content?: T;
+  travelInfo?:
+    | T
+    | {
+        bestTimeToVisit?: T;
+        altitudeMeters?: T;
+        isUnescoSite?: T;
+      };
+  coordinates?:
+    | T
+    | {
+        latitude?: T;
+        longitude?: T;
+      };
+  gallery?:
+    | T
+    | {
+        image?: T;
+        caption?: T;
+        id?: T;
+      };
+  quickInfo?:
+    | T
+    | {
+        mainAttractions?: T;
+        idealFor?: T;
+        visitDuration?: T;
+      };
+  attractions?:
+    | T
+    | {
+        name?: T;
+        description?: T;
+        image?: T;
+        id?: T;
+      };
+  recommendedAccommodation?:
+    | T
+    | {
+        name?: T;
+        rating?: T;
+        reviewCount?: T;
+        category?: T;
+        description?: T;
+        image?: T;
+        link?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  heroImage?: T;
+  excerpt?: T;
+  content?: T;
+  author?: T;
+  categories?: T;
+  destinations?: T;
+  publishedDate?: T;
+  readingTimeMinutes?: T;
+  featured?: T;
+  meta?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        ogImage?: T;
+      };
+  newsletterPublishedAt?: T;
+  viewCount?: T;
+  commentCount?: T;
+  engagementScore?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "comments_select".
+ */
+export interface CommentsSelect<T extends boolean = true> {
+  article?: T;
+  status?: T;
+  full_name?: T;
+  email?: T;
+  phone?: T;
+  commentText?: T;
+  body?: T;
+  moderatedBy?: T;
+  moderatedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-views_select".
+ */
+export interface ArticleViewsSelect<T extends boolean = true> {
+  article?: T;
+  visitorHash?: T;
+  dayBucket?: T;
+  viewKey?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "title_select".
+ */
+export interface TitleSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  slug?: T;
+  heroImage?: T;
+  status?: T;
+  placement?: T;
+  variant?: T;
+  ctaText?: T;
+  ctaLink?: T;
+  sponsorLabel?: T;
+  durationValue?: T;
+  durationUnit?: T;
+  startDate?: T;
+  endDate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  locale?: T;
+  source?: T;
+  confirmationTokenHash?: T;
+  confirmationExpiresAt?: T;
+  unsubscribeTokenHash?: T;
+  tokenVersion?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-broadcasts_select".
+ */
+export interface NewsletterBroadcastsSelect<T extends boolean = true> {
+  article?: T;
+  status?: T;
+  fanoutStatus?: T;
+  fanoutCompletedAt?: T;
+  totalRecipients?: T;
+  sentCount?: T;
+  failedCount?: T;
+  skippedCount?: T;
+  enqueuedAt?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletter-deliveries_select".
+ */
+export interface NewsletterDeliveriesSelect<T extends boolean = true> {
+  broadcast?: T;
+  article?: T;
+  subscriber?: T;
+  recipientEmail?: T;
+  deliveryKey?: T;
+  status?: T;
+  attempts?: T;
+  lastError?: T;
+  sentAt?: T;
+  workerId?: T;
+  leaseClaimedAt?: T;
+  leaseExpiresAt?: T;
+  locale?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

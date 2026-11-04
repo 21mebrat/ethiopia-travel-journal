@@ -7,8 +7,8 @@ import { handleServerFunctions, RootLayout } from '@payloadcms/next/layouts'
 import React from 'react'
 
 import { importMap } from './admin/importMap.js'
+import './style.css'
 import './custom.scss'
-import PerformancePatch from '@/components/payload/PerformancePatch'
 
 type Args = {
   children: React.ReactNode
@@ -25,7 +25,6 @@ const serverFunction: ServerFunctionClient = async function (args) {
 
 const Layout = ({ children }: Args) => (
   <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-    <PerformancePatch />
     {children}
   </RootLayout>
 )

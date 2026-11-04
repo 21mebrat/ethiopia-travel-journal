@@ -1,8 +1,15 @@
+'use client'
+
+import ThemeToggle from './ThemeToggle'
+
 export default function WelcomeMessage() {
   return (
-    <div>
-      <h2>Welcome to Ethiopia Tour Blog</h2>
-      <p>Sign in to manage your travel content.</p>
-    </div>
+    <>
+      {/* Floating Theme Toggle in top-right */}
+      <ThemeToggle floating={true} />
+      <p className="m-0 text-[13.5px] leading-relaxed text-muted-foreground max-w-85 text-center mx-auto">
+        Sign in to manage destinations, stories, and multimedia content in English and Amharic.
+      </p>
+    </>
   )
 }

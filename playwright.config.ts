@@ -30,12 +30,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: 'npm run start -- -H 127.0.0.1',
     reuseExistingServer: true,
-    url: 'http://localhost:3000',
+    url: 'http://127.0.0.1:3000/api/newsletter/subscribe',
   },
 })
