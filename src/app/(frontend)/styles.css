@@ -54,8 +54,8 @@
     --cat-brown: oklch(0.62 0.08 55);
     --cat-purple: oklch(0.62 0.14 300);
 
-    --site-max: 100rem;
-    --site-gutter: 1rem;
+    --site-max: 88rem;
+    --site-gutter: 0.5rem;
   }
 
   .dark,
@@ -246,7 +246,7 @@
    Layout helpers
    ========================================================================== */
 .container-site {
-  width: 100%;
+  width: 90%;
   max-width: var(--site-max);
   margin-inline: auto;
   padding-inline: var(--site-gutter);
